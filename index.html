@@ -7,6 +7,13 @@
 <title>Peter T. - Product Design for Startups & Enterprise</title>
 <link rel="stylesheet" type="text/css" href="styles.css">
 <link rel="icon" type="image/png" href="favico.ico">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script>
+    function scrollToElement() {
+        var element = document.getElementById('scrollToElement');
+        element.scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
 </head>
 <body>
 
@@ -32,8 +39,16 @@
             <h1>
                 Got a great product?<br>
                 Let's make it amazing.</h1>
-            <button class="button" id="primary">How I can help you</button>
-            <button class="button">Get in touch</button>
+            <button class="button" onclick="scrollToElement()" id="primary">How I can help you
+
+               
+            </button>
+
+
+            <a href="mailto:petraugustindesign@gmail.com">
+            <button  class="button">
+                Get in touch <i class="fa fa-envelope"></i>
+            </button></a>
         </div>
         <div class="column">
             
@@ -65,7 +80,7 @@
     </div>
 </div>
 
-<div class="container">
+<div class="container" id="scrollToElement">
 <p class="label-problem">THE PROBLEM</p>
 
 

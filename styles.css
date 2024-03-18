@@ -184,6 +184,11 @@ ul {
     border-radius: 6px; 
     font-weight: 600;
     font-size: 0.8em;
+    transition: transform 0.3s ease; /* Add this line for smooth transition */
+}
+
+.button:hover {
+    transform: scale(1.1); /* Add this line to scale up on hover */
 }
 
 #primary {
