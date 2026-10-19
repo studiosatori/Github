@@ -16,7 +16,7 @@ final class IslandScene {
         topMaterial = island.topMaterial
         grass = GrassField(parent: island.node, seed: Self.seed, growthSeconds: growthSeconds)
 
-        island.node.addChildNode(Shrine.makeNode())
+        island.node.addChildNode(Landmarks.makeNode())
         island.node.addChildNode(cat.node)
         scene.rootNode.addChildNode(island.node)
         cat.start()
@@ -25,8 +25,8 @@ final class IslandScene {
         camera.fieldOfView = 35
         let cameraNode = SCNNode()
         cameraNode.camera = camera
-        cameraNode.position = SCNVector3(0, 2.4, 6.6)
-        cameraNode.look(at: SCNVector3(0, -0.35, 0))
+        cameraNode.position = SCNVector3(0, 2.9, 6.6)
+        cameraNode.look(at: SCNVector3(0, 0.3, 0))
         scene.rootNode.addChildNode(cameraNode)
 
         let ambient = SCNLight()

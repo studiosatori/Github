@@ -4,8 +4,8 @@ import SceneKit
 /// The idle mechanic: a new tuft sprouts every `sproutInterval` seconds and grows to full size.
 /// Everything is derived from `growthSeconds`, so saving that one number saves the island.
 final class GrassField {
-    static let maxTufts = 220
-    static let sproutInterval: Double = 6
+    static let maxTufts = 400
+    static let sproutInterval: Double = 3.5
     static let growDuration: Double = 30
 
     private(set) var growthSeconds: Double
@@ -52,10 +52,10 @@ final class GrassField {
             let r = IslandBuilder.grassRadius * rng.float(0...1).squareRoot()
             let angle = rng.float(0...(2 * Float.pi))
             spot = SIMD2(cos(angle) * r * IslandBuilder.stretch.x, sin(angle) * r * IslandBuilder.stretch.z)
-            if !Shrine.isBlocked(spot, margin: 0.04) { break }
+            if !Landmarks.isBlocked(spot, margin: 0.04) { break }
         }
         let node = SCNNode(geometry: geometries[Int(rng.next() % UInt64(geometries.count))])
-        node.position = scnVector(SIMD3(spot.x, IslandBuilder.surfaceHeight(atX: spot.x, z: spot.y) - 0.03, spot.y))
+        node.position = scnVector(SIMD3(spot.x, IslandBuilder.surfaceHeight(atX: spot.x, z: spot.y) - 0.02, spot.y))
         node.eulerAngles.y = CGFloat(rng.float(0...(2 * Float.pi)))
         parent.addChildNode(node)
         tufts.append((node, Double(index) * Self.sproutInterval, rng.float(0.75...1.2)))

@@ -25,6 +25,28 @@ enum Shapes {
         return node
     }
 
+    static func sphere(radius: CGFloat, _ color: NSColor, texture: CGImage? = nil,
+                       at center: SCNVector3, scale: SCNVector3 = SCNVector3(1, 1, 1)) -> SCNNode {
+        let geometry = SCNSphere(radius: radius)
+        geometry.segmentCount = 12
+        geometry.materials = [IslandBuilder.flatMaterial(color, texture: texture)]
+        let node = SCNNode(geometry: geometry)
+        node.position = center
+        node.scale = scale
+        return node
+    }
+
+    static func capsule(radius: CGFloat, height: CGFloat, _ color: NSColor, texture: CGImage? = nil,
+                        at center: SCNVector3) -> SCNNode {
+        let geometry = SCNCapsule(capRadius: radius, height: height)
+        geometry.radialSegmentCount = 8
+        geometry.capSegmentCount = 3
+        geometry.materials = [IslandBuilder.flatMaterial(color, texture: texture)]
+        let node = SCNNode(geometry: geometry)
+        node.position = center
+        return node
+    }
+
     /// A six-sided post.
     static func post(radius: CGFloat, height: CGFloat, _ color: NSColor, at base: SCNVector3) -> SCNNode {
         let geometry = SCNCylinder(radius: radius, height: height)

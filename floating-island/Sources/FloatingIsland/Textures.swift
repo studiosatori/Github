@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import simd
 
 /// Tiny 32×32 procedural textures. Shown with nearest-neighbor filtering for a crunchy PS1 look.
 /// They're grayscale and get tinted by vertex colors or the material color.
@@ -19,6 +20,33 @@ enum Textures {
                 pixels[y * size + x] *= 0.62
                 x = (x + Int(rng.next() % 3) + size - 1) % size
                 y = (y + 1) % size
+            }
+        }
+        return image(pixels)
+    }()
+
+    /// Cream fur with wavy orange tabby stripes, in rows so they wrap around spheres and capsules.
+    /// In color, unlike the others; use it with a white material.
+    static let tabby: CGImage = {
+        var rng = SeededRandom(seed: 15)
+        let cream = SIMD3<Float>(0.99, 0.90, 0.74)
+        let orange = SIMD3<Float>(0.90, 0.58, 0.30)
+        let wave = (0..<size).map { x in Int((sin(Float(x) / Float(size) * 4 * Float.pi) * 1.5).rounded()) + 2 }
+        let pixels = (0..<size * size).map { i -> SIMD3<Float> in
+            let x = i % size, y = i / size
+            return ((y + wave[x]) % 8 < 3 ? orange : cream) * rng.float(0.95...1.0)
+        }
+        return image(rgb: pixels)
+    }()
+
+    /// Standing-seam metal roofing: a light rib and a shadow line every 4 pixels.
+    static let metal: CGImage = {
+        var rng = SeededRandom(seed: 16)
+        let pixels = (0..<size * size).map { i -> Float in
+            switch (i / size) % 4 {
+            case 0: return 1
+            case 1: return 0.72
+            default: return rng.float(0.88...0.93)
             }
         }
         return image(pixels)
@@ -67,9 +95,13 @@ enum Textures {
     }()
 
     private static func image(_ gray: [Float]) -> CGImage {
-        let bytes = gray.flatMap { value -> [UInt8] in
-            let b = UInt8(max(0, min(1, value)) * 255)
-            return [b, b, b, 255]
+        image(rgb: gray.map { SIMD3(repeating: $0) })
+    }
+
+    private static func image(rgb: [SIMD3<Float>]) -> CGImage {
+        let bytes = rgb.flatMap { color -> [UInt8] in
+            let c = simd_clamp(color, SIMD3(repeating: 0), SIMD3(repeating: 1)) * 255
+            return [UInt8(c.x), UInt8(c.y), UInt8(c.z), 255]
         }
         let provider = CGDataProvider(data: Data(bytes) as CFData)!
         return CGImage(width: size, height: size, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: size * 4,
