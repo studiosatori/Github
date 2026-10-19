@@ -4,8 +4,8 @@ import SceneKit
 /// The idle mechanic: a new tuft sprouts every `sproutInterval` seconds and grows to full size.
 /// Everything is derived from `growthSeconds`, so saving that one number saves the island.
 final class GrassField {
-    static let maxTufts = 400
-    static let sproutInterval: Double = 3.5
+    static let maxTufts = 800
+    static let sproutInterval: Double = 1.75
     static let growDuration: Double = 30
 
     private(set) var growthSeconds: Double

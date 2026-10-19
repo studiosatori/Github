@@ -75,12 +75,12 @@ enum IslandBuilder {
         let dome: (Float) -> Float = { IslandBuilder.surfaceHeight(atRadius: $0) }
         let edge = ring(radius: 0.88...1.06, twist: 0, height: dome, jitterY: 0.04)
         let inner = ring(radius: 0.42...0.58, twist: 0.26, height: dome, jitterY: 0.03)
-        let rim = edge.map { p in SIMD3(p.x * 0.95, p.y - rng.float(0.13...0.2), p.z * 0.95) }
-        let rock1 = ring(radius: 0.70...0.92, twist: 0.1, height: { _ in -0.3 }, jitterY: 0.06, lean: 0.05)
-        let rock2 = ring(radius: 0.48...0.78, twist: 0.2, height: { _ in -0.5 }, jitterY: 0.07, lean: 0.12)
-        let rock3 = ring(radius: 0.32...0.56, twist: 0.3, height: { _ in -0.68 }, jitterY: 0.06, lean: 0.18)
-        let rock4 = ring(radius: 0.12...0.28, twist: 0.4, height: { _ in -0.84 }, jitterY: 0.05, lean: 0.24)
-        let tip = leanDirection * 0.28 + SIMD3<Float>(rng.float(-0.06...0.06), -1.0, rng.float(-0.06...0.06))
+        let rim = edge.map { p in SIMD3(p.x * 0.95, p.y - rng.float(0.2...0.3), p.z * 0.95) }
+        let rock1 = ring(radius: 0.70...0.92, twist: 0.1, height: { _ in -0.58 }, jitterY: 0.1, lean: 0.06)
+        let rock2 = ring(radius: 0.48...0.78, twist: 0.2, height: { _ in -0.98 }, jitterY: 0.12, lean: 0.14)
+        let rock3 = ring(radius: 0.32...0.56, twist: 0.3, height: { _ in -1.34 }, jitterY: 0.1, lean: 0.22)
+        let rock4 = ring(radius: 0.12...0.28, twist: 0.4, height: { _ in -1.66 }, jitterY: 0.08, lean: 0.3)
+        let tip = leanDirection * 0.34 + SIMD3<Float>(rng.float(-0.06...0.06), -1.98, rng.float(-0.06...0.06))
         let center = SIMD3<Float>(0, dome(0) + 0.02, 0)
 
         // Top: grayscale per-face shades, colored by the shared top material.

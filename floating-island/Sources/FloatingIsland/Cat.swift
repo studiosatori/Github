@@ -22,11 +22,12 @@ final class Cat {
     private static let legX: CGFloat = 0.085
 
     /// Island units per second: a slow stroll.
-    private let speed: Float = 0.12
+    private let speed: Float = 0.08
     private let stepDuration = 0.6
 
     init() {
         build()
+        node.scale = SCNVector3(0.6, 0.6, 0.6)
         node.position = Self.groundPosition(Self.randomSpot())
         node.eulerAngles.y = CGFloat(Float.random(in: 0...(2 * Float.pi)))
     }
@@ -209,7 +210,7 @@ final class Cat {
             for _ in 0..<30 {
                 let candidate = Self.randomSpot()
                 let distance = simd_distance(from, candidate)
-                if distance > 0.3 && distance < 1.0 && Self.isPathClear(from, candidate) {
+                if distance > 0.2 && distance < 0.8 && Self.isPathClear(from, candidate) {
                     to = candidate
                     break
                 }
@@ -286,15 +287,15 @@ final class Cat {
             let r = IslandBuilder.grassRadius * 0.9 * Float.random(in: 0...1).squareRoot()
             let angle = Float.random(in: 0...(2 * Float.pi))
             let p = SIMD2(cos(angle) * r * IslandBuilder.stretch.x, sin(angle) * r * IslandBuilder.stretch.z)
-            if !Landmarks.isBlocked(p, margin: 0.24) { return p }
+            if !Landmarks.isBlocked(p, margin: 0.15) { return p }
         }
         return SIMD2(0.2, 0.7)
     }
 
-    /// The top is convex, so only the cabin and gate posts can get in the way.
+    /// The top is convex, so only the cabin can get in the way.
     private static func isPathClear(_ from: SIMD2<Float>, _ to: SIMD2<Float>) -> Bool {
         (0...16).allSatisfy { i in
-            !Landmarks.isBlocked(from + (to - from) * (Float(i) / 16), margin: 0.2)
+            !Landmarks.isBlocked(from + (to - from) * (Float(i) / 16), margin: 0.13)
         }
     }
 }

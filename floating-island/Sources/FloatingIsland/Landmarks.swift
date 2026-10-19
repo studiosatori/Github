@@ -2,15 +2,12 @@ import AppKit
 import SceneKit
 import simd
 
-/// The little cabin with its deck, and the torii gate, plus the ground they take up.
+/// The little cabin with its deck, and the ground it takes up.
 enum Landmarks {
     /// Island-space (x, z) positions. The camera looks from +z, so the cabin sits toward the back,
     /// turned a little so you see its front and one side.
     static let cabinPosition = SIMD2<Float>(-0.15, -0.45)
     static let cabinAngle: Float = -0.5
-    static let toriiPosition = SIMD2<Float>(0.7, 0.55)
-    static let toriiAngle: Float = 0.4
-    static let toriiHalfSpan: Float = 0.36
 
     /// A rectangle that may be turned around the vertical axis.
     private struct Footprint {
@@ -30,17 +27,12 @@ enum Landmarks {
         SIMD2(p.x * cos(angle) + p.y * sin(angle), -p.x * sin(angle) + p.y * cos(angle))
     }
 
-    private static let toriiPosts = [Float(-1), 1].map { side in
-        toriiPosition + rotated(SIMD2(side * toriiHalfSpan, 0), by: toriiAngle)
-    }
-
     private static let footprints =
         // Cabin, deck and steps, in the cabin's own frame: x -0.67...0.7, z -0.37...0.8.
         [Footprint(center: cabinPosition + rotated(SIMD2(0.015, 0.215), by: cabinAngle),
                    halfSize: SIMD2(0.685, 0.585), angle: cabinAngle)]
-        + toriiPosts.map { Footprint(center: $0, halfSize: SIMD2(0.045, 0.045)) }
 
-    /// Whether something at `p` would bump into the cabin or the gate posts.
+    /// Whether something at `p` would bump into the cabin.
     static func isBlocked(_ p: SIMD2<Float>, margin: Float) -> Bool {
         footprints.contains { $0.contains(p, margin: margin) }
     }
@@ -51,10 +43,6 @@ enum Landmarks {
         cabin.position = groundPosition(cabinPosition)
         cabin.eulerAngles.y = CGFloat(cabinAngle)
         node.addChildNode(cabin)
-        let torii = makeTorii()
-        torii.position = groundPosition(toriiPosition)
-        torii.eulerAngles.y = CGFloat(toriiAngle)
-        node.addChildNode(torii)
         return node
     }
 
@@ -69,7 +57,6 @@ enum Landmarks {
     private static let trim = Shapes.color(0.12, 0.12, 0.13)
     private static let glass = Shapes.color(0.42, 0.58, 0.64)
     private static let foundation = Shapes.color(0.28, 0.28, 0.31)
-    private static let vermilion = Shapes.color(0.76, 0.30, 0.22)
 
     /// Repeats a node's texture so boards and ribs come out narrow.
     private static func repeatTexture(_ node: SCNNode, _ x: CGFloat, _ y: CGFloat) -> SCNNode {
@@ -81,33 +68,37 @@ enum Landmarks {
     /// sliding glass door (tall enough for the cat), with a deck, two lounge chairs and a step. Faces +z.
     private static func makeCabin() -> SCNNode {
         let c = SCNNode()
+        // The house is squashed to 60% height so it sits low and cozy next to the deck.
+        let house = SCNNode()
+        house.scale = SCNVector3(1, 0.6, 1)
+        c.addChildNode(house)
         let wallTop: CGFloat = 1.13
         let front: CGFloat = 0.35
 
         c.addChildNode(Shapes.box(0.86, 0.18, 0.66, foundation, at: SCNVector3(0, -0.1, 0)))
-        c.addChildNode(repeatTexture(Shapes.box(0.9, wallTop - 0.08, 0.7, cedar, texture: Textures.planks,
+        house.addChildNode(repeatTexture(Shapes.box(0.9, wallTop - 0.08, 0.7, cedar, texture: Textures.planks,
                                                 at: SCNVector3(0, 0.08, 0)), 4, 1))
-        c.addChildNode(makeGables(halfWidth: 0.45, halfDepth: Float(front), baseY: Float(wallTop), peakY: 1.56))
-        c.addChildNode(makeRoof(wallTop: wallTop))
+        house.addChildNode(makeGables(halfWidth: 0.45, halfDepth: Float(front), baseY: Float(wallTop), peakY: 1.56))
+        house.addChildNode(makeRoof(wallTop: wallTop))
         // Downspout on the front corner.
-        c.addChildNode(Shapes.box(0.025, wallTop - 0.08, 0.025, trim, at: SCNVector3(-0.44, 0.08, front + 0.015)))
+        house.addChildNode(Shapes.box(0.025, wallTop - 0.08, 0.025, trim, at: SCNVector3(-0.44, 0.08, front + 0.015)))
 
         // Tall window and sliding door on the front.
         func window(width: CGFloat, height: CGFloat, x: CGFloat, y: CGFloat) {
-            c.addChildNode(Shapes.box(width, height, 0.02, trim, at: SCNVector3(x, y, front + 0.002)))
-            c.addChildNode(Shapes.box(width - 0.04, height - 0.04, 0.012, glass, at: SCNVector3(x, y + 0.02, front + 0.012)))
+            house.addChildNode(Shapes.box(width, height, 0.02, trim, at: SCNVector3(x, y, front + 0.002)))
+            house.addChildNode(Shapes.box(width - 0.04, height - 0.04, 0.012, glass, at: SCNVector3(x, y + 0.02, front + 0.012)))
         }
         window(width: 0.22, height: 0.55, x: -0.27, y: 0.45)
         let doorX: CGFloat = 0.16
-        c.addChildNode(Shapes.box(0.42, 0.92, 0.02, trim, at: SCNVector3(doorX, 0.15, front + 0.002)))
+        house.addChildNode(Shapes.box(0.42, 0.92, 0.02, trim, at: SCNVector3(doorX, 0.15, front + 0.002)))
         for dx: CGFloat in [-0.1, 0.1] {
-            c.addChildNode(Shapes.box(0.18, 0.86, 0.012, glass, at: SCNVector3(doorX + dx, 0.18, front + 0.012)))
+            house.addChildNode(Shapes.box(0.18, 0.86, 0.012, glass, at: SCNVector3(doorX + dx, 0.18, front + 0.012)))
         }
-        c.addChildNode(Shapes.box(0.02, 0.92, 0.016, trim, at: SCNVector3(doorX, 0.15, front + 0.014)))
+        house.addChildNode(Shapes.box(0.02, 0.92, 0.016, trim, at: SCNVector3(doorX, 0.15, front + 0.014)))
         // Two small high windows on the right side.
         for z: CGFloat in [-0.15, 0.15] {
-            c.addChildNode(Shapes.box(0.02, 0.14, 0.22, trim, at: SCNVector3(0.452, 0.82, z)))
-            c.addChildNode(Shapes.box(0.012, 0.1, 0.18, glass, at: SCNVector3(0.462, 0.84, z)))
+            house.addChildNode(Shapes.box(0.02, 0.14, 0.22, trim, at: SCNVector3(0.452, 0.82, z)))
+            house.addChildNode(Shapes.box(0.012, 0.1, 0.18, glass, at: SCNVector3(0.462, 0.84, z)))
         }
 
         // Deck: grey boards with a wooden rim, on short posts.
@@ -191,25 +182,5 @@ enum Landmarks {
         back.eulerAngles.x = -0.35
         chair.addChildNode(back)
         return chair
-    }
-
-    /// Big red gate with a black top beam that curves up at the ends. The cat fits underneath.
-    private static func makeTorii() -> SCNNode {
-        let t = SCNNode()
-        let span = CGFloat(toriiHalfSpan)
-        for x in [-span, span] {
-            t.addChildNode(Shapes.post(radius: 0.04, height: 1.16, vermilion, at: SCNVector3(x, -0.04, 0)))
-            t.addChildNode(Shapes.post(radius: 0.055, height: 0.08, trim, at: SCNVector3(x, -0.03, 0)))
-        }
-        t.addChildNode(Shapes.box(0.92, 0.05, 0.05, vermilion, at: SCNVector3(0, 0.9, 0)))
-        t.addChildNode(Shapes.box(0.06, 0.08, 0.04, vermilion, at: SCNVector3(0, 0.95, 0)))
-        t.addChildNode(Shapes.box(1.0, 0.05, 0.08, vermilion, at: SCNVector3(0, 1.03, 0)))
-        t.addChildNode(Shapes.box(1.12, 0.06, 0.11, trim, at: SCNVector3(0, 1.08, 0)))
-        for side: CGFloat in [-1, 1] {
-            let end = Shapes.box(0.12, 0.05, 0.11, trim, at: SCNVector3(side * 0.6, 1.1, 0))
-            end.eulerAngles.z = side * 0.25
-            t.addChildNode(end)
-        }
-        return t
     }
 }
