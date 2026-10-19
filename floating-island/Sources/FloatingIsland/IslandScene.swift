@@ -1,13 +1,14 @@
 import AppKit
 import SceneKit
 
-/// The island plus camera, lights, and its gentle idle bob.
+/// The island with its temple and cat, plus camera and lights.
 final class IslandScene {
     static let seed: UInt64 = 2026
 
     let scene = SCNScene()
     let grass: GrassField
     private let topMaterial: SCNMaterial
+    private let cat = Cat()
     private var shownCoverage = -1.0
 
     init(growthSeconds: Double) {
@@ -15,16 +16,17 @@ final class IslandScene {
         topMaterial = island.topMaterial
         grass = GrassField(parent: island.node, seed: Self.seed, growthSeconds: growthSeconds)
 
-        let root = SCNNode()
-        root.addChildNode(island.node)
-        scene.rootNode.addChildNode(root)
+        island.node.addChildNode(Shrine.makeNode())
+        island.node.addChildNode(cat.node)
+        scene.rootNode.addChildNode(island.node)
+        cat.start()
 
         let camera = SCNCamera()
         camera.fieldOfView = 35
         let cameraNode = SCNNode()
         cameraNode.camera = camera
-        cameraNode.position = SCNVector3(0, 2.6, 7.0)
-        cameraNode.look(at: SCNVector3(0, -0.55, 0))
+        cameraNode.position = SCNVector3(0, 2.4, 6.6)
+        cameraNode.look(at: SCNVector3(0, -0.35, 0))
         scene.rootNode.addChildNode(cameraNode)
 
         let ambient = SCNLight()
@@ -43,12 +45,6 @@ final class IslandScene {
         sunNode.light = sun
         sunNode.eulerAngles = SCNVector3(-0.9, 0.5, 0)
         scene.rootNode.addChildNode(sunNode)
-
-        let rise = SCNAction.moveBy(x: 0, y: 0.08, z: 0, duration: 2.5)
-        let fall = SCNAction.moveBy(x: 0, y: -0.08, z: 0, duration: 2.5)
-        rise.timingMode = .easeInEaseOut
-        fall.timingMode = .easeInEaseOut
-        root.runAction(.repeatForever(.sequence([rise, fall])))
 
         refreshTopColor()
     }
@@ -69,7 +65,7 @@ final class IslandScene {
         shownCoverage = coverage
         // The ground turns green a bit ahead of the grass, so it reads as a meadow sooner.
         let mix = CGFloat(min(1, coverage * 1.4))
-        topMaterial.diffuse.contents = IslandBuilder.dirtColor.blended(withFraction: mix, of: IslandBuilder.meadowColor)
+        topMaterial.multiply.contents = IslandBuilder.dirtColor.blended(withFraction: mix, of: IslandBuilder.meadowColor)
             ?? IslandBuilder.meadowColor
     }
 }

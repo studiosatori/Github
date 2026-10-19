@@ -46,11 +46,16 @@ final class GrassField {
 
     private func sprout(index: Int) {
         var rng = SeededRandom(seed: seed &+ UInt64(index) &* 1_000_003)
-        let r = IslandBuilder.grassRadius * rng.float(0...1).squareRoot()
-        let angle = rng.float(0...(2 * Float.pi))
+        // Pick a spot that isn't under the temple.
+        var spot = SIMD2<Float>(0, 0)
+        for _ in 0..<20 {
+            let r = IslandBuilder.grassRadius * rng.float(0...1).squareRoot()
+            let angle = rng.float(0...(2 * Float.pi))
+            spot = SIMD2(cos(angle) * r * IslandBuilder.stretch.x, sin(angle) * r * IslandBuilder.stretch.z)
+            if !Shrine.isBlocked(spot, margin: 0.04) { break }
+        }
         let node = SCNNode(geometry: geometries[Int(rng.next() % UInt64(geometries.count))])
-        node.position = scnVector(SIMD3(cos(angle) * r, IslandBuilder.surfaceHeight(atRadius: r) - 0.03,
-                                        sin(angle) * r) * IslandBuilder.stretch)
+        node.position = scnVector(SIMD3(spot.x, IslandBuilder.surfaceHeight(atX: spot.x, z: spot.y) - 0.03, spot.y))
         node.eulerAngles.y = CGFloat(rng.float(0...(2 * Float.pi)))
         parent.addChildNode(node)
         tufts.append((node, Double(index) * Self.sproutInterval, rng.float(0.75...1.2)))

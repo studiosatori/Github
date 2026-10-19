@@ -9,12 +9,12 @@ enum IslandBuilder {
     /// Squashes the island into a slight oval.
     static let stretch = SIMD3<Float>(1.15, 1, 0.9)
 
-    static let dirtColor = NSColor(srgbRed: 0.48, green: 0.42, blue: 0.46, alpha: 1)
-    static let meadowColor = NSColor(srgbRed: 0.40, green: 0.68, blue: 0.56, alpha: 1)
+    static let dirtColor = NSColor(srgbRed: 0.52, green: 0.43, blue: 0.40, alpha: 1)
+    static let meadowColor = NSColor(srgbRed: 0.52, green: 0.68, blue: 0.36, alpha: 1)
     static let grassColors = [
-        NSColor(srgbRed: 0.33, green: 0.62, blue: 0.52, alpha: 1),
-        NSColor(srgbRed: 0.42, green: 0.72, blue: 0.58, alpha: 1),
-        NSColor(srgbRed: 0.28, green: 0.54, blue: 0.48, alpha: 1),
+        NSColor(srgbRed: 0.47, green: 0.66, blue: 0.30, alpha: 1),
+        NSColor(srgbRed: 0.57, green: 0.74, blue: 0.33, alpha: 1),
+        NSColor(srgbRed: 0.41, green: 0.58, blue: 0.27, alpha: 1),
     ]
 
     struct Island {
@@ -29,10 +29,26 @@ enum IslandBuilder {
         return 0.12 * (1 - t * t)
     }
 
-    static func flatMaterial(_ color: NSColor) -> SCNMaterial {
+    /// Surface height at an island-space (x, z) point, taking the oval stretch into account.
+    static func surfaceHeight(atX x: Float, z: Float) -> Float {
+        surfaceHeight(atRadius: simd_length(SIMD2(x / stretch.x, z / stretch.z)))
+    }
+
+    /// Flat lambert material. With a texture, the color tints it, and pixels stay sharp.
+    static func flatMaterial(_ color: NSColor, texture: CGImage? = nil) -> SCNMaterial {
         let material = SCNMaterial()
         material.lightingModel = .lambert
-        material.diffuse.contents = color
+        if let texture {
+            material.diffuse.contents = texture
+            material.diffuse.magnificationFilter = .nearest
+            material.diffuse.minificationFilter = .nearest
+            material.diffuse.mipFilter = .none
+            material.diffuse.wrapS = .repeat
+            material.diffuse.wrapT = .repeat
+            material.multiply.contents = color
+        } else {
+            material.diffuse.contents = color
+        }
         return material
     }
 
@@ -59,12 +75,12 @@ enum IslandBuilder {
         let dome: (Float) -> Float = { IslandBuilder.surfaceHeight(atRadius: $0) }
         let edge = ring(radius: 0.88...1.06, twist: 0, height: dome, jitterY: 0.04)
         let inner = ring(radius: 0.42...0.58, twist: 0.26, height: dome, jitterY: 0.03)
-        let rim = edge.map { p in SIMD3(p.x * 0.95, p.y - rng.float(0.2...0.34), p.z * 0.95) }
-        let rock1 = ring(radius: 0.70...0.92, twist: 0.1, height: { _ in -0.6 }, jitterY: 0.15, lean: 0.08)
-        let rock2 = ring(radius: 0.48...0.78, twist: 0.2, height: { _ in -1.15 }, jitterY: 0.18, lean: 0.2)
-        let rock3 = ring(radius: 0.32...0.56, twist: 0.3, height: { _ in -1.7 }, jitterY: 0.15, lean: 0.32)
-        let rock4 = ring(radius: 0.12...0.28, twist: 0.4, height: { _ in -2.2 }, jitterY: 0.12, lean: 0.42)
-        let tip = leanDirection * 0.5 + SIMD3<Float>(rng.float(-0.08...0.08), -2.75, rng.float(-0.08...0.08))
+        let rim = edge.map { p in SIMD3(p.x * 0.95, p.y - rng.float(0.18...0.3), p.z * 0.95) }
+        let rock1 = ring(radius: 0.70...0.92, twist: 0.1, height: { _ in -0.45 }, jitterY: 0.1, lean: 0.06)
+        let rock2 = ring(radius: 0.48...0.78, twist: 0.2, height: { _ in -0.82 }, jitterY: 0.12, lean: 0.15)
+        let rock3 = ring(radius: 0.32...0.56, twist: 0.3, height: { _ in -1.18 }, jitterY: 0.1, lean: 0.24)
+        let rock4 = ring(radius: 0.12...0.28, twist: 0.4, height: { _ in -1.5 }, jitterY: 0.08, lean: 0.32)
+        let tip = leanDirection * 0.38 + SIMD3<Float>(rng.float(-0.08...0.08), -1.85, rng.float(-0.08...0.08))
         let center = SIMD3<Float>(0, dome(0) + 0.02, 0)
 
         // Top: grayscale per-face shades, colored by the shared top material.
@@ -97,10 +113,10 @@ enum IslandBuilder {
                                  color: vertexColor(0.32, 0.35, 0.46, shade: rng.float(0.8...1.05)))
         }
 
-        let topMaterial = flatMaterial(dirtColor)
+        let topMaterial = flatMaterial(dirtColor, texture: Textures.soil)
         let node = SCNNode()
         node.addChildNode(SCNNode(geometry: top.makeGeometry(material: topMaterial)))
-        node.addChildNode(SCNNode(geometry: body.makeGeometry(material: flatMaterial(.white))))
+        node.addChildNode(SCNNode(geometry: body.makeGeometry(material: flatMaterial(.white, texture: Textures.rock))))
         return Island(node: node, topMaterial: topMaterial)
     }
 

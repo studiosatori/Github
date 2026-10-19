@@ -6,6 +6,9 @@ struct LowPolyMesh {
     private var positions: [SCNVector3] = []
     private var normals: [SCNVector3] = []
     private var colors: [SIMD4<Float>] = []
+    private var uvs: [CGPoint] = []
+    /// Texture repeats per island unit.
+    var uvScale: Float = 1.2
 
     /// Adds a triangle whose normal faces `outward`; the winding is fixed up to match.
     mutating func addTriangle(_ a: SIMD3<Float>, _ b: SIMD3<Float>, _ c: SIMD3<Float>,
@@ -20,7 +23,21 @@ struct LowPolyMesh {
             positions.append(scnVector(vertex))
             normals.append(scnVector(normal))
             colors.append(color)
+            uvs.append(uv(for: vertex, normal: normal))
         }
+    }
+
+    /// Box projection: each face takes the texture from whichever side it mostly faces.
+    private func uv(for v: SIMD3<Float>, normal n: SIMD3<Float>) -> CGPoint {
+        let p: SIMD2<Float>
+        if abs(n.y) >= abs(n.x) && abs(n.y) >= abs(n.z) {
+            p = SIMD2(v.x, v.z)
+        } else if abs(n.x) >= abs(n.z) {
+            p = SIMD2(v.z, -v.y)
+        } else {
+            p = SIMD2(v.x, -v.y)
+        }
+        return CGPoint(x: CGFloat(p.x * uvScale), y: CGFloat(p.y * uvScale))
     }
 
     /// Adds a triangle on the island's side, facing away from the vertical axis.
@@ -39,7 +56,8 @@ struct LowPolyMesh {
             dataOffset: 0, dataStride: MemoryLayout<SIMD4<Float>>.stride)
         let element = SCNGeometryElement(indices: Array(0..<Int32(positions.count)), primitiveType: .triangles)
         let geometry = SCNGeometry(
-            sources: [SCNGeometrySource(vertices: positions), SCNGeometrySource(normals: normals), colorSource],
+            sources: [SCNGeometrySource(vertices: positions), SCNGeometrySource(normals: normals),
+                      SCNGeometrySource(textureCoordinates: uvs), colorSource],
             elements: [element])
         geometry.materials = [material]
         return geometry
