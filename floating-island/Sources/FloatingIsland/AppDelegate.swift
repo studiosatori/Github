@@ -158,7 +158,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private static let pixelLookKey = "pixelLook"
 
     /// Fraction of the window's resolution the pixel look renders at. Smaller means chunkier pixels.
-    private static let pixelResolution: CGFloat = 0.25
+    private static let pixelResolution: CGFloat = 0.5
 
     @objc private func togglePixelLook() {
         let on = pixelTimer == nil
