@@ -18,7 +18,7 @@ final class GrassField {
         self.parent = parent
         self.seed = seed
         self.growthSeconds = max(0, growthSeconds)
-        geometries = IslandBuilder.makeTuftGeometries(seed: seed &+ 1, count: 6)
+        geometries = IslandBuilder.makeTuftGeometries(seed: seed &+ 1, count: 8)
         advance(by: 0)
     }
 
@@ -46,7 +46,7 @@ final class GrassField {
 
     private func sprout(index: Int) {
         var rng = SeededRandom(seed: seed &+ UInt64(index) &* 1_000_003)
-        // Pick a spot that isn't under the temple.
+        // Pick a spot that isn't under the cabin.
         var spot = SIMD2<Float>(0, 0)
         for _ in 0..<20 {
             let r = IslandBuilder.grassRadius * rng.float(0...1).squareRoot()
@@ -55,7 +55,7 @@ final class GrassField {
             if !Landmarks.isBlocked(spot, margin: 0.04) { break }
         }
         let node = SCNNode(geometry: geometries[Int(rng.next() % UInt64(geometries.count))])
-        node.position = scnVector(SIMD3(spot.x, IslandBuilder.surfaceHeight(atX: spot.x, z: spot.y) - 0.02, spot.y))
+        node.position = scnVector(SIMD3(spot.x, IslandBuilder.surfaceHeight(atX: spot.x, z: spot.y) - 0.01, spot.y))
         node.eulerAngles.y = CGFloat(rng.float(0...(2 * Float.pi)))
         parent.addChildNode(node)
         tufts.append((node, Double(index) * Self.sproutInterval, rng.float(0.75...1.2)))

@@ -2,25 +2,17 @@ import CoreGraphics
 import Foundation
 import simd
 
-/// Tiny 32×32 procedural textures. Shown with nearest-neighbor filtering for a crunchy PS1 look.
+/// Tiny 32×32 procedural textures. Shown with nearest-neighbor filtering for a soft lo-fi look.
 /// They're grayscale and get tinted by vertex colors or the material color.
 enum Textures {
     private static let size = 32
 
-    /// Blotchy stone with a few dark cracks.
+    /// Soft, blotchy earth and stone.
     static let rock: CGImage = {
         var rng = SeededRandom(seed: 11)
         let blotches = (0..<64).map { _ in rng.float(0.84...1.0) }
-        var pixels = (0..<size * size).map { i in
-            blotches[(i / size / 4) * 8 + (i % size) / 4] * rng.float(0.92...1.0)
-        }
-        for _ in 0..<6 {
-            var x = Int(rng.next() % UInt64(size)), y = Int(rng.next() % UInt64(size))
-            for _ in 0..<9 {
-                pixels[y * size + x] *= 0.62
-                x = (x + Int(rng.next() % 3) + size - 1) % size
-                y = (y + 1) % size
-            }
+        let pixels = (0..<size * size).map { i in
+            blotches[(i / size / 4) * 8 + (i % size) / 4] * rng.float(0.95...1.0)
         }
         return image(pixels)
     }()
@@ -50,6 +42,20 @@ enum Textures {
             }
         }
         return image(pixels)
+    }()
+
+    /// Orange sail canvas on a dark wooden lattice, with a few worn, darker patches. In color.
+    static let lattice: CGImage = {
+        var rng = SeededRandom(seed: 17)
+        let canvas = SIMD3<Float>(0.80, 0.48, 0.26)
+        let wood = SIMD3<Float>(0.36, 0.22, 0.14)
+        let wear = (0..<16).map { _ in rng.float(0...1) < 0.25 ? rng.float(0.7...0.85) : 1 }
+        let pixels = (0..<size * size).map { i -> SIMD3<Float> in
+            let x = i % size, y = i / size
+            if x % 8 == 0 || y % 8 == 0 { return wood * rng.float(0.9...1.0) }
+            return canvas * wear[(y / 8) * 4 + x / 8] * rng.float(0.93...1.0)
+        }
+        return image(rgb: pixels)
     }()
 
     /// Grainy ground with light and dark specks.

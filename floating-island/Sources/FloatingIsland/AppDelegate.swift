@@ -23,8 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         islandView.scene = islandScene.scene
         islandView.backgroundColor = .clear
         islandView.layer?.isOpaque = false
-        // No antialiasing: crisp, slightly jaggy edges, like the PS1.
-        islandView.antialiasingMode = .none
+        islandView.antialiasingMode = .multisampling4X
         islandView.preferredFramesPerSecond = 30
         islandView.menu = makeMenu()
 

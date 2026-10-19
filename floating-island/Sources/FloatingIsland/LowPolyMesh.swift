@@ -27,6 +27,18 @@ struct LowPolyMesh {
         }
     }
 
+    /// Adds a triangle as given, with per-vertex colors and one shared normal. Foliage uses an
+    /// upward normal so leaves light evenly, like a soft painted look, whichever way they face.
+    mutating func addTriangle(_ a: SIMD3<Float>, _ b: SIMD3<Float>, _ c: SIMD3<Float>, normal: SIMD3<Float>,
+                              colors corners: (SIMD4<Float>, SIMD4<Float>, SIMD4<Float>)) {
+        for (vertex, color) in [(a, corners.0), (b, corners.1), (c, corners.2)] {
+            positions.append(scnVector(vertex))
+            normals.append(scnVector(normal))
+            colors.append(color)
+            uvs.append(uv(for: vertex, normal: normal))
+        }
+    }
+
     /// Box projection: each face takes the texture from whichever side it mostly faces.
     private func uv(for v: SIMD3<Float>, normal n: SIMD3<Float>) -> CGPoint {
         let p: SIMD2<Float>
@@ -71,6 +83,10 @@ func scnVector(_ v: SIMD3<Float>) -> SCNVector3 {
 /// sRGB color converted to linear, which is how SceneKit reads vertex colors.
 func vertexColor(_ r: Float, _ g: Float, _ b: Float, shade: Float = 1) -> SIMD4<Float> {
     SIMD4(pow(r * shade, 2.2), pow(g * shade, 2.2), pow(b * shade, 2.2), 1)
+}
+
+func vertexColor(_ c: SIMD3<Float>, shade: Float = 1) -> SIMD4<Float> {
+    vertexColor(c.x, c.y, c.z, shade: shade)
 }
 
 /// Small deterministic RNG (SplitMix64), so the same seed always builds the same island.

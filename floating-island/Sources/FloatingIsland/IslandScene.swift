@@ -1,7 +1,7 @@
 import AppKit
 import SceneKit
 
-/// The island with its temple and cat, plus camera and lights.
+/// The island with its cabin, cat and hanging vines, plus camera and lights.
 final class IslandScene {
     static let seed: UInt64 = 2026
 
@@ -9,12 +9,15 @@ final class IslandScene {
     let grass: GrassField
     private let topMaterial: SCNMaterial
     private let cat = Cat()
+    private let vines: Vines
     private var shownCoverage = -1.0
 
     init(growthSeconds: Double) {
         let island = IslandBuilder.makeIsland(seed: Self.seed)
         topMaterial = island.topMaterial
         grass = GrassField(parent: island.node, seed: Self.seed, growthSeconds: growthSeconds)
+        vines = Vines(edge: island.edge, rim: island.rim, seed: Self.seed &+ 2)
+        island.node.addChildNode(vines.node)
 
         island.node.addChildNode(Landmarks.makeNode())
         island.node.addChildNode(cat.node)
@@ -31,16 +34,17 @@ final class IslandScene {
 
         let ambient = SCNLight()
         ambient.type = .ambient
-        ambient.intensity = 450
-        ambient.color = NSColor(srgbRed: 0.80, green: 0.86, blue: 1, alpha: 1)
+        // Soft, warm light with gentle contrast.
+        ambient.intensity = 650
+        ambient.color = NSColor(srgbRed: 1, green: 0.97, blue: 0.92, alpha: 1)
         let ambientNode = SCNNode()
         ambientNode.light = ambient
         scene.rootNode.addChildNode(ambientNode)
 
         let sun = SCNLight()
         sun.type = .directional
-        sun.intensity = 850
-        sun.color = NSColor(srgbRed: 0.94, green: 0.96, blue: 1, alpha: 1)
+        sun.intensity = 650
+        sun.color = NSColor(srgbRed: 1, green: 0.95, blue: 0.85, alpha: 1)
         let sunNode = SCNNode()
         sunNode.light = sun
         sunNode.eulerAngles = SCNVector3(-0.9, 0.5, 0)
@@ -63,6 +67,7 @@ final class IslandScene {
         let coverage = grass.coverage
         guard coverage != shownCoverage else { return }
         shownCoverage = coverage
+        vines.update(coverage: coverage)
         // The ground turns green a bit ahead of the grass, so it reads as a meadow sooner.
         let mix = CGFloat(min(1, coverage * 1.4))
         topMaterial.multiply.contents = IslandBuilder.dirtColor.blended(withFraction: mix, of: IslandBuilder.meadowColor)

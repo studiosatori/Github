@@ -4,23 +4,34 @@ import SceneKit
 /// Builds the island rock and the grass tuft shapes procedurally.
 enum IslandBuilder {
     static let radius: Float = 1.6
-    /// Grass stays inside this radius so tufts never hang over the edge.
-    static let grassRadius: Float = radius * 0.68
+    /// Grass grows out to here; leaves near the rim spill a little over the edge.
+    static let grassRadius: Float = radius * 0.8
     /// Squashes the island into a slight oval.
     static let stretch = SIMD3<Float>(1.15, 1, 0.9)
 
-    static let dirtColor = NSColor(srgbRed: 0.52, green: 0.43, blue: 0.40, alpha: 1)
-    static let meadowColor = NSColor(srgbRed: 0.52, green: 0.68, blue: 0.36, alpha: 1)
-    static let grassColors = [
-        NSColor(srgbRed: 0.47, green: 0.66, blue: 0.30, alpha: 1),
-        NSColor(srgbRed: 0.57, green: 0.74, blue: 0.33, alpha: 1),
-        NSColor(srgbRed: 0.41, green: 0.58, blue: 0.27, alpha: 1),
+    static let dirtColor = NSColor(srgbRed: 0.40, green: 0.30, blue: 0.22, alpha: 1)
+    static let meadowColor = NSColor(srgbRed: 0.28, green: 0.42, blue: 0.17, alpha: 1)
+    /// Leaf colors, dark at the base and light at the tip (sRGB).
+    static let leafPalettes: [(base: SIMD3<Float>, tip: SIMD3<Float>)] = [
+        (SIMD3(0.16, 0.30, 0.10), SIMD3(0.45, 0.66, 0.24)),
+        (SIMD3(0.18, 0.34, 0.11), SIMD3(0.55, 0.72, 0.28)),
+        (SIMD3(0.14, 0.27, 0.10), SIMD3(0.38, 0.58, 0.22)),
     ]
 
     struct Island {
         let node: SCNNode
         /// Tinted from dirt to meadow as the grass spreads.
         let topMaterial: SCNMaterial
+        /// The top rim and the ring just below it, for hanging vines over the edge.
+        let edge: [SIMD3<Float>]
+        let rim: [SIMD3<Float>]
+    }
+
+    /// Double-sided material colored only by vertex colors, for leaves.
+    static func foliageMaterial() -> SCNMaterial {
+        let material = flatMaterial(.white)
+        material.isDoubleSided = true
+        return material
     }
 
     /// Height of the gently domed top surface at distance `r` from the center.
@@ -99,50 +110,88 @@ enum IslandBuilder {
         func band(_ upper: [SIMD3<Float>], _ lower: [SIMD3<Float>], r: Float, g: Float, b: Float) {
             for i in 0..<sides {
                 let j = (i + 1) % sides
-                body.addSideTriangle(upper[i], lower[i], upper[j], color: vertexColor(r, g, b, shade: rng.float(0.8...1.06)))
-                body.addSideTriangle(lower[i], lower[j], upper[j], color: vertexColor(r, g, b, shade: rng.float(0.8...1.06)))
+                body.addSideTriangle(upper[i], lower[i], upper[j], color: vertexColor(r, g, b, shade: rng.float(0.9...1.05)))
+                body.addSideTriangle(lower[i], lower[j], upper[j], color: vertexColor(r, g, b, shade: rng.float(0.9...1.05)))
             }
         }
-        band(edge, rim, r: 0.44, g: 0.38, b: 0.43)
-        band(rim, rock1, r: 0.44, g: 0.44, b: 0.52)
-        band(rock1, rock2, r: 0.46, g: 0.50, b: 0.60)
-        band(rock2, rock3, r: 0.40, g: 0.44, b: 0.55)
-        band(rock3, rock4, r: 0.36, g: 0.39, b: 0.50)
+        // Warm, earthy browns, darker toward the bottom.
+        band(edge, rim, r: 0.33, g: 0.24, b: 0.18)
+        band(rim, rock1, r: 0.38, g: 0.28, b: 0.22)
+        band(rock1, rock2, r: 0.40, g: 0.30, b: 0.25)
+        band(rock2, rock3, r: 0.35, g: 0.26, b: 0.23)
+        band(rock3, rock4, r: 0.30, g: 0.23, b: 0.21)
         for i in 0..<sides {
             body.addSideTriangle(rock4[i], rock4[(i + 1) % sides], tip,
-                                 color: vertexColor(0.32, 0.35, 0.46, shade: rng.float(0.8...1.05)))
+                                 color: vertexColor(0.26, 0.20, 0.19, shade: rng.float(0.9...1.05)))
         }
 
         let topMaterial = flatMaterial(dirtColor, texture: Textures.soil)
         let node = SCNNode()
         node.addChildNode(SCNNode(geometry: top.makeGeometry(material: topMaterial)))
         node.addChildNode(SCNNode(geometry: body.makeGeometry(material: flatMaterial(.white, texture: Textures.rock))))
-        return Island(node: node, topMaterial: topMaterial)
+        return Island(node: node, topMaterial: topMaterial, edge: edge, rim: rim)
     }
 
-    /// A few tuft variants, each a cluster of thin three-sided blades.
+    /// Leafy tuft variants: broad leaves that rise and bend outward, dark at the base and light
+    /// at the tip. Every fourth variant has a little yellow flower poking out.
     static func makeTuftGeometries(seed: UInt64, count: Int) -> [SCNGeometry] {
         var rng = SeededRandom(seed: seed)
-        let materials = grassColors.map { IslandBuilder.flatMaterial($0) }
+        let material = foliageMaterial()
+        let up = SIMD3<Float>(0, 1, 0)
         return (0..<count).map { variant in
             var mesh = LowPolyMesh()
-            for _ in 0..<Int.random(in: 3...5, using: &rng) {
-                let base = SIMD3<Float>(rng.float(-0.03...0.03), 0, rng.float(-0.03...0.03))
-                let lean = SIMD3<Float>(rng.float(-0.03...0.03), 0, rng.float(-0.03...0.03))
-                let tip = base + lean + SIMD3(0, rng.float(0.07...0.15), 0)
-                let width = rng.float(0.011...0.018)
-                let turn = rng.float(0...(2 * Float.pi))
-                let corners = (0..<3).map { k -> SIMD3<Float> in
-                    let a = turn + Float(k) * 2 * Float.pi / 3
-                    return base + SIMD3(cos(a) * width, 0, sin(a) * width)
-                }
-                for k in 0..<3 {
-                    let c0 = corners[k], c1 = corners[(k + 1) % 3]
-                    mesh.addTriangle(c0, c1, tip, outward: (c0 + c1) / 2 - base,
-                                     color: vertexColor(1, 1, 1, shade: rng.float(0.82...1.0)))
-                }
+            let palette = leafPalettes[variant % leafPalettes.count]
+            for _ in 0..<Int.random(in: 5...8, using: &rng) {
+                let yaw = rng.float(0...(2 * Float.pi))
+                let out = SIMD3<Float>(cos(yaw), 0, sin(yaw))
+                let side = SIMD3<Float>(-out.z, 0, out.x)
+                let length = rng.float(0.1...0.18)
+                let width = rng.float(0.018...0.03)
+                let lean = rng.float(0.25...0.7)
+                let base = out * rng.float(0...0.02)
+                let mid = base + SIMD3(0, length * 0.55, 0) + out * (length * lean * 0.3)
+                let tip = base + SIMD3(0, length, 0) + out * (length * lean)
+                let shade = rng.float(0.88...1.08)
+                let dark = vertexColor(palette.base, shade: shade)
+                let light = vertexColor(palette.tip, shade: shade)
+                let middle = (dark + light) / 2
+                let b0 = base - side * width * 0.3, b1 = base + side * width * 0.3
+                let m0 = mid - side * width, m1 = mid + side * width
+                mesh.addTriangle(b0, b1, m1, normal: up, colors: (dark, dark, middle))
+                mesh.addTriangle(b0, m1, m0, normal: up, colors: (dark, middle, middle))
+                mesh.addTriangle(m0, m1, tip, normal: up, colors: (middle, middle, light))
             }
-            return mesh.makeGeometry(material: materials[variant % materials.count])
+            if variant % 4 == 3 {
+                addFlower(to: &mesh, height: rng.float(0.17...0.24), rng: &rng)
+            }
+            return mesh.makeGeometry(material: material)
+        }
+    }
+
+    /// A thin stem with a five-petal yellow flower on top, facing up.
+    private static func addFlower(to mesh: inout LowPolyMesh, height: Float, rng: inout SeededRandom) {
+        let up = SIMD3<Float>(0, 1, 0)
+        let stem = vertexColor(SIMD3(0.24, 0.42, 0.16))
+        let top = SIMD3<Float>(rng.float(-0.02...0.02), height, rng.float(-0.02...0.02))
+        let w = SIMD3<Float>(0.004, 0, 0)
+        mesh.addTriangle(-w, w, top, normal: up, colors: (stem, stem, stem))
+        mesh.addTriangle(SIMD3(0, 0, -0.004), SIMD3(0, 0, 0.004), top, normal: up, colors: (stem, stem, stem))
+
+        let petal = vertexColor(SIMD3(0.98, 0.80, 0.22))
+        let petalTip = vertexColor(SIMD3(1.0, 0.88, 0.40))
+        let heart = vertexColor(SIMD3(0.62, 0.36, 0.12))
+        let turn = rng.float(0...(2 * Float.pi))
+        for k in 0..<5 {
+            let a = turn + Float(k) * 2 * Float.pi / 5
+            let left = top + SIMD3(cos(a - 0.35), 0, sin(a - 0.35)) * 0.03
+            let right = top + SIMD3(cos(a + 0.35), 0, sin(a + 0.35)) * 0.03
+            mesh.addTriangle(top, left, right, normal: up, colors: (petal, petalTip, petalTip))
+        }
+        let lifted = top + SIMD3(0, 0.003, 0)
+        for k in 0..<5 {
+            let a = Float(k) * 2 * Float.pi / 5, b = Float(k + 1) * 2 * Float.pi / 5
+            mesh.addTriangle(lifted, lifted + SIMD3(cos(a), 0, sin(a)) * 0.01, lifted + SIMD3(cos(b), 0, sin(b)) * 0.01,
+                             normal: up, colors: (heart, heart, heart))
         }
     }
 }
