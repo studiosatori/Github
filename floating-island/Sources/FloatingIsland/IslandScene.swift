@@ -7,6 +7,7 @@ final class IslandScene {
 
     let scene = SCNScene()
     let grass: GrassField
+    let cameraNode = SCNNode()
     private let topMaterial: SCNMaterial
     private let cat = Cat()
     private let vines: Vines
@@ -22,11 +23,12 @@ final class IslandScene {
         island.node.addChildNode(Landmarks.makeNode())
         island.node.addChildNode(cat.node)
         scene.rootNode.addChildNode(island.node)
+        // Transparent background, also for offscreen snapshots in the pixel look.
+        scene.background.contents = NSColor.clear
         cat.start()
 
         let camera = SCNCamera()
         camera.fieldOfView = 35
-        let cameraNode = SCNNode()
         cameraNode.camera = camera
         cameraNode.position = SCNVector3(0, 2.66, 6.77)
         cameraNode.look(at: SCNVector3(0, -0.07, 0))

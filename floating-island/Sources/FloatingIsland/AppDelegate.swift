@@ -10,7 +10,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private var islandScene: IslandScene!
     private var window: IslandWindow!
+    private var container: IslandContainerView!
     private var islandView: IslandView!
+    private var pixelView: PixelView!
+    private var pixelRenderer: SCNRenderer?
+    private var pixelTimer: Timer?
+    private var pixelImage: CGImage?
     private var resizeHandle: ResizeHandle!
     private var handleShown = false
     private var statusItem: NSStatusItem!
@@ -20,26 +25,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         islandScene = IslandScene(growthSeconds: GrowthStore.load())
 
-        islandView = IslandView(frame: NSRect(x: 0, y: 0, width: 504, height: 420))
+        container = IslandContainerView(frame: NSRect(x: 0, y: 0, width: 504, height: 420))
+        container.menu = makeMenu()
+
+        islandView = IslandView(frame: container.bounds)
+        islandView.autoresizingMask = [.width, .height]
         islandView.scene = islandScene.scene
+        islandView.pointOfView = islandScene.cameraNode
         islandView.backgroundColor = .clear
         islandView.layer?.isOpaque = false
-        // The pixel look is experimental and off by default; it's switched on from the menu.
-        applyPixelLook(UserDefaults.standard.bool(forKey: Self.pixelLookKey))
+        islandView.antialiasingMode = .multisampling4X
         islandView.preferredFramesPerSecond = 30
         islandView.menu = makeMenu()
+        container.addSubview(islandView)
+
+        pixelView = PixelView(frame: container.bounds)
+        pixelView.autoresizingMask = [.width, .height]
+        pixelView.isHidden = true
+        container.addSubview(pixelView)
 
         let inset = ResizeHandle.diameter + 8
-        resizeHandle = ResizeHandle(frame: NSRect(x: islandView.bounds.maxX - inset, y: islandView.bounds.maxY - inset,
+        resizeHandle = ResizeHandle(frame: NSRect(x: container.bounds.maxX - inset, y: container.bounds.maxY - inset,
                                                   width: ResizeHandle.diameter, height: ResizeHandle.diameter))
         resizeHandle.autoresizingMask = [.minXMargin, .minYMargin]
         resizeHandle.alphaValue = 0
-        islandView.addSubview(resizeHandle)
+        container.addSubview(resizeHandle)
 
-        window = IslandWindow(size: islandView.frame.size)
-        window.contentView = islandView
+        window = IslandWindow(size: container.frame.size)
+        window.contentView = container
         window.setFrameAutosaveName("FloatingIslandWideWindow")
         window.orderFrontRegardless()
+        applyPixelLook(UserDefaults.standard.bool(forKey: Self.pixelLookKey))
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.title = "🏝"
@@ -83,6 +99,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let windowPoint = window.convertPoint(fromScreen: mouse)
             if resizeHandle.bounds.contains(resizeHandle.convert(windowPoint, from: nil)) {
                 interactive = true
+            } else if pixelTimer != nil {
+                interactive = isDrawnPixel(at: pixelView.convert(windowPoint, from: nil))
             } else {
                 let point = islandView.convert(windowPoint, from: nil)
                 interactive = !islandView.hitTest(point, options: [.searchMode: SCNHitTestSearchMode.any.rawValue]).isEmpty
@@ -134,21 +152,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.item(withTag: Tag.growth)?.title = "🌱 Grass: \(islandScene.grass.sproutedCount) / \(GrassField.maxTufts)"
         menu.item(withTag: Tag.onTop)?.state = window.level == .floating ? .on : .off
-        menu.item(withTag: Tag.pixelLook)?.state = islandView.technique != nil ? .on : .off
+        menu.item(withTag: Tag.pixelLook)?.state = pixelTimer != nil ? .on : .off
     }
 
     private static let pixelLookKey = "pixelLook"
 
+    /// Fraction of the window's resolution the pixel look renders at. Smaller means chunkier pixels.
+    private static let pixelResolution: CGFloat = 0.25
+
     @objc private func togglePixelLook() {
-        let on = islandView.technique == nil
+        let on = pixelTimer == nil
         applyPixelLook(on)
         UserDefaults.standard.set(on, forKey: Self.pixelLookKey)
     }
 
-    /// Low-resolution render scaled up with sharp pixels, or the normal smooth render.
+    /// Pixel look: the 3D view is hidden, and each frame the scene is rendered offscreen into a small
+    /// image that the pixel view shows scaled up with sharp pixels. Off: the normal smooth 3D view.
     private func applyPixelLook(_ on: Bool) {
-        islandView.technique = on ? PixelTechnique.make(device: islandView.device) : nil
-        islandView.antialiasingMode = islandView.technique == nil ? .multisampling4X : .none
+        pixelTimer?.invalidate()
+        pixelTimer = nil
+        islandView.isHidden = on
+        islandView.isPlaying = !on
+        pixelView.isHidden = !on
+        guard on else { return }
+        if pixelRenderer == nil {
+            let renderer = SCNRenderer(device: islandView.device, options: nil)
+            renderer.scene = islandScene.scene
+            renderer.pointOfView = islandScene.cameraNode
+            pixelRenderer = renderer
+        }
+        renderPixelFrame()
+        pixelTimer = Timer.scheduledTimer(timeInterval: 1.0 / 30, target: self, selector: #selector(renderPixelFrame),
+                                          userInfo: nil, repeats: true)
+    }
+
+    @objc private func renderPixelFrame() {
+        guard let renderer = pixelRenderer else { return }
+        let scale = window.backingScaleFactor * Self.pixelResolution
+        let size = CGSize(width: max(1, (pixelView.bounds.width * scale).rounded()),
+                          height: max(1, (pixelView.bounds.height * scale).rounded()))
+        let image = renderer.snapshot(atTime: CACurrentMediaTime(), with: size, antialiasingMode: .none)
+        pixelImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+        pixelView.layer?.contents = pixelImage
+    }
+
+    /// Whether the pixel look drew something (not transparent) at this point in the pixel view.
+    private func isDrawnPixel(at point: NSPoint) -> Bool {
+        guard let image = pixelImage, pixelView.bounds.width > 0, pixelView.bounds.height > 0 else { return false }
+        let x = Int(point.x / pixelView.bounds.width * CGFloat(image.width))
+        let y = Int(point.y / pixelView.bounds.height * CGFloat(image.height))
+        var pixel = [UInt8](repeating: 0, count: 4)
+        pixel.withUnsafeMutableBytes { bytes in
+            // Draw the image shifted so the pixel under the mouse lands in a 1×1 bitmap.
+            guard let context = CGContext(data: bytes.baseAddress, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+                                          space: CGColorSpaceCreateDeviceRGB(),
+                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return }
+            context.draw(image, in: CGRect(x: -x, y: -y, width: image.width, height: image.height))
+        }
+        return pixel[3] > 0
     }
 
     @objc private func toggleOnTop() {

@@ -20,6 +20,31 @@ final class IslandWindow: NSWindow {
     override var canBecomeKey: Bool { true }
 }
 
+/// The window's content: holds the 3D view, the pixel view and the resize button.
+/// Dragging anywhere on it moves the window (when the pixel view is showing, it gets the clicks).
+final class IslandContainerView: NSView {
+    override func mouseDown(with event: NSEvent) {
+        window?.performDrag(with: event)
+    }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
+/// Shows a small image scaled up with sharp, unsmoothed pixels. Clicks go through to the container.
+final class PixelView: NSView {
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layer?.contentsGravity = .resize
+        layer?.magnificationFilter = .nearest
+        layer?.minificationFilter = .nearest
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+}
+
 /// Dragging anywhere on the island moves the window.
 final class IslandView: SCNView {
     override func mouseDown(with event: NSEvent) {
