@@ -25,7 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         islandScene = IslandScene(growthSeconds: GrowthStore.load())
 
-        container = IslandContainerView(frame: NSRect(x: 0, y: 0, width: 504, height: 420))
+        container = IslandContainerView(frame: NSRect(x: 0, y: 0, width: 580, height: 420))
         container.menu = makeMenu()
 
         islandView = IslandView(frame: container.bounds)
@@ -53,7 +53,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         window = IslandWindow(size: container.frame.size)
         window.contentView = container
-        window.setFrameAutosaveName("FloatingIslandWideWindow")
+        window.setFrameAutosaveName("FloatingIslandWiderWindow")
         window.orderFrontRegardless()
         applyPixelLook(UserDefaults.standard.bool(forKey: Self.pixelLookKey))
 

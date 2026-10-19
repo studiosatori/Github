@@ -8,6 +8,13 @@ enum IslandBuilder {
     static let grassRadius: Float = radius * 0.8
     /// Squashes the island into a slight oval.
     static let stretch = SIMD3<Float>(1.35, 1, 0.9)
+    /// Extra stretch on the right-hand side only, so the island reaches further to the right.
+    static let rightStretch: Float = 1.3
+
+    /// Maps a point on the round, unstretched island to its place on the real (stretched) island.
+    static func spread(_ x: Float, _ z: Float) -> SIMD2<Float> {
+        SIMD2(x * stretch.x * (x > 0 ? rightStretch : 1), z * stretch.z)
+    }
 
     static let dirtColor = NSColor(srgbRed: 0.36, green: 0.30, blue: 0.25, alpha: 1)
     static let meadowColor = NSColor(srgbRed: 0.30, green: 0.36, blue: 0.22, alpha: 1)
@@ -40,9 +47,10 @@ enum IslandBuilder {
         return 0.12 * (1 - t * t)
     }
 
-    /// Surface height at an island-space (x, z) point, taking the oval stretch into account.
+    /// Surface height at an island-space (x, z) point, undoing the stretch from `spread`.
     static func surfaceHeight(atX x: Float, z: Float) -> Float {
-        surfaceHeight(atRadius: simd_length(SIMD2(x / stretch.x, z / stretch.z)))
+        let unstretchedX = x / (stretch.x * (x > 0 ? rightStretch : 1))
+        return surfaceHeight(atRadius: simd_length(SIMD2(unstretchedX, z / stretch.z)))
     }
 
     /// Flat lambert material. With a texture, the color tints it, and pixels stay sharp.
@@ -78,7 +86,8 @@ enum IslandBuilder {
             angles.map { angle in
                 let r = IslandBuilder.radius * rng.float(scale)
                 let y = height(r) + rng.float(-jitterY...jitterY)
-                return SIMD3(cos(angle + twist) * r, y, sin(angle + twist) * r) * IslandBuilder.stretch
+                let p = IslandBuilder.spread(cos(angle + twist) * r, sin(angle + twist) * r)
+                return SIMD3(p.x, y, p.y)
                     + leanDirection * lean
             }
         }

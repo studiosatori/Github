@@ -30,8 +30,8 @@ final class IslandScene {
         let camera = SCNCamera()
         camera.fieldOfView = 35
         cameraNode.camera = camera
-        cameraNode.position = SCNVector3(0, 2.66, 6.77)
-        cameraNode.look(at: SCNVector3(0, -0.07, 0))
+        cameraNode.position = SCNVector3(0.35, 2.66, 6.77)
+        cameraNode.look(at: SCNVector3(0.35, -0.07, 0))
         scene.rootNode.addChildNode(cameraNode)
 
         let ambient = SCNLight()

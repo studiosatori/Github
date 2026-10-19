@@ -51,7 +51,7 @@ final class GrassField {
         for _ in 0..<20 {
             let r = IslandBuilder.grassRadius * rng.float(0...1).squareRoot()
             let angle = rng.float(0...(2 * Float.pi))
-            spot = SIMD2(cos(angle) * r * IslandBuilder.stretch.x, sin(angle) * r * IslandBuilder.stretch.z)
+            spot = IslandBuilder.spread(cos(angle) * r, sin(angle) * r)
             if !Landmarks.isBlocked(spot, margin: 0.04) { break }
         }
         let node = SCNNode(geometry: geometries[Int(rng.next() % UInt64(geometries.count))])

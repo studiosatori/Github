@@ -277,7 +277,7 @@ final class Cat {
         for _ in 0..<50 {
             let r = IslandBuilder.grassRadius * 0.9 * Float.random(in: 0...1).squareRoot()
             let angle = Float.random(in: 0...(2 * Float.pi))
-            let p = SIMD2(cos(angle) * r * IslandBuilder.stretch.x, sin(angle) * r * IslandBuilder.stretch.z)
+            let p = IslandBuilder.spread(cos(angle) * r, sin(angle) * r)
             if !Landmarks.isBlocked(p, margin: 0.15) { return p }
         }
         return SIMD2(0.2, 0.7)
