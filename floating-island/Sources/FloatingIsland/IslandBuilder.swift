@@ -9,7 +9,7 @@ enum IslandBuilder {
     /// Squashes the island into a slight oval.
     static let stretch = SIMD3<Float>(1.35, 1, 0.9)
     /// Extra stretch on the right-hand side only, so the island reaches further to the right.
-    static let rightStretch: Float = 1.3
+    static let rightStretch: Float = 1.6
 
     /// Maps a point on the round, unstretched island to its place on the real (stretched) island.
     static func spread(_ x: Float, _ z: Float) -> SIMD2<Float> {
@@ -96,11 +96,11 @@ enum IslandBuilder {
         let edge = ring(radius: 0.88...1.06, twist: 0, height: dome, jitterY: 0.04)
         let inner = ring(radius: 0.42...0.58, twist: 0.26, height: dome, jitterY: 0.03)
         let rim = edge.map { p in SIMD3(p.x * 0.95, p.y - rng.float(0.2...0.3), p.z * 0.95) }
-        let rock1 = ring(radius: 0.70...0.92, twist: 0.1, height: { _ in -0.58 }, jitterY: 0.1, lean: 0.06)
-        let rock2 = ring(radius: 0.48...0.78, twist: 0.2, height: { _ in -0.98 }, jitterY: 0.12, lean: 0.14)
-        let rock3 = ring(radius: 0.32...0.56, twist: 0.3, height: { _ in -1.34 }, jitterY: 0.1, lean: 0.22)
-        let rock4 = ring(radius: 0.12...0.28, twist: 0.4, height: { _ in -1.66 }, jitterY: 0.08, lean: 0.3)
-        let tip = leanDirection * 0.34 + SIMD3<Float>(rng.float(-0.06...0.06), -1.98, rng.float(-0.06...0.06))
+        let rock1 = ring(radius: 0.70...0.92, twist: 0.1, height: { _ in -0.46 }, jitterY: 0.08, lean: 0.06)
+        let rock2 = ring(radius: 0.48...0.78, twist: 0.2, height: { _ in -0.78 }, jitterY: 0.1, lean: 0.14)
+        let rock3 = ring(radius: 0.32...0.56, twist: 0.3, height: { _ in -1.07 }, jitterY: 0.08, lean: 0.22)
+        let rock4 = ring(radius: 0.12...0.28, twist: 0.4, height: { _ in -1.33 }, jitterY: 0.06, lean: 0.3)
+        let tip = leanDirection * 0.34 + SIMD3<Float>(rng.float(-0.06...0.06), -1.58, rng.float(-0.06...0.06))
         let center = SIMD3<Float>(0, dome(0) + 0.02, 0)
 
         // Top: grayscale per-face shades, colored by the shared top material.
