@@ -5,6 +5,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private enum Tag {
         static let growth = 1
         static let onTop = 2
+        static let pixelLook = 3
     }
 
     private var islandScene: IslandScene!
@@ -23,9 +24,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         islandView.scene = islandScene.scene
         islandView.backgroundColor = .clear
         islandView.layer?.isOpaque = false
-        // Chunky, sharp pixels: low-resolution render scaled up, no smoothing.
-        islandView.antialiasingMode = .none
-        islandView.technique = PixelTechnique.make(device: islandView.device)
+        // The pixel look is experimental and off by default; it's switched on from the menu.
+        applyPixelLook(UserDefaults.standard.bool(forKey: Self.pixelLookKey))
         islandView.preferredFramesPerSecond = 30
         islandView.menu = makeMenu()
 
@@ -115,6 +115,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         onTop.target = self
         menu.addItem(onTop)
 
+        let pixelLook = NSMenuItem(title: "Pixel Look (Experimental)", action: #selector(togglePixelLook), keyEquivalent: "")
+        pixelLook.tag = Tag.pixelLook
+        pixelLook.target = self
+        menu.addItem(pixelLook)
+
         let reset = NSMenuItem(title: "Reset Island", action: #selector(resetIsland), keyEquivalent: "")
         reset.target = self
         menu.addItem(reset)
@@ -129,6 +134,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.item(withTag: Tag.growth)?.title = "🌱 Grass: \(islandScene.grass.sproutedCount) / \(GrassField.maxTufts)"
         menu.item(withTag: Tag.onTop)?.state = window.level == .floating ? .on : .off
+        menu.item(withTag: Tag.pixelLook)?.state = islandView.technique != nil ? .on : .off
+    }
+
+    private static let pixelLookKey = "pixelLook"
+
+    @objc private func togglePixelLook() {
+        let on = islandView.technique == nil
+        applyPixelLook(on)
+        UserDefaults.standard.set(on, forKey: Self.pixelLookKey)
+    }
+
+    /// Low-resolution render scaled up with sharp pixels, or the normal smooth render.
+    private func applyPixelLook(_ on: Bool) {
+        islandView.technique = on ? PixelTechnique.make(device: islandView.device) : nil
+        islandView.antialiasingMode = islandView.technique == nil ? .multisampling4X : .none
     }
 
     @objc private func toggleOnTop() {

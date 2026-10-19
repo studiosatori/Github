@@ -30,7 +30,17 @@ enum PixelTechnique {
 
     /// Returns nil if the shader can't be built, in which case the scene just renders normally.
     static func make(device: MTLDevice?) -> SCNTechnique? {
-        guard let device, let library = try? device.makeLibrary(source: shaderSource, options: nil) else { return nil }
+        guard let device else {
+            print("Pixel look: no Metal device")
+            return nil
+        }
+        let library: MTLLibrary
+        do {
+            library = try device.makeLibrary(source: shaderSource, options: nil)
+        } catch {
+            print("Pixel look: shader failed to compile: \(error)")
+            return nil
+        }
         let technique = SCNTechnique(dictionary: [
             "passes": [
                 "lowres": [
