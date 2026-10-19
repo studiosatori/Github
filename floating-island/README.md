@@ -1,6 +1,6 @@
 # Floating Island
 
-A cozy idle game: a small low-poly island of earthy rock floats on your macOS desktop. An old windmill turns slowly on top, a chubby tabby in overalls lazes about, and a leafy meadow with yellow flowers slowly grows in, with vines spilling over the edge. Soft, lo-fi 3D look.
+A cozy idle game: a small low-poly island of earthy rock floats on your macOS desktop. An old windmill turns slowly on top, a chubby tabby in overalls lazes about, and a leafy meadow with yellow flowers slowly grows in, with vines spilling over the edge. Muted, lo-fi 3D look rendered in chunky, sharp pixels.
 
 - Frameless, transparent window: only the island shows, floating over your other apps and on every Space.
 - A new grass tuft sprouts every 1.75 seconds and grows in over 30 seconds. The ground turns from dirt to meadow as the grass spreads (800 tufts, about 23 minutes to fill).
@@ -31,7 +31,8 @@ You can also open `Package.swift` in Xcode and press Run.
 | `Vines.swift` | Vines hanging over the edge, growing in with the meadow |
 | `Cat.swift` | The cat: her look, sitting, blinking and slow strolls |
 | `Textures.swift` | Tiny procedural pixel textures |
-| `Shapes.swift` | Box, pyramid and post building blocks |
+| `PixelTechnique.swift` | Low-resolution render scaled up with sharp pixels |
+| `Shapes.swift` | Box, pyramid, post and faceted blob building blocks |
 | `AppDelegate.swift` | Game loop, click-through, menus, save/load |
 
 Tuning knobs: `GrassField.sproutInterval`, `growDuration`, `maxTufts`, and `IslandScene.seed` (changes the island's shape).

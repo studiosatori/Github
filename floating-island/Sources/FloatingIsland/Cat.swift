@@ -38,32 +38,31 @@ final class Cat {
 
     // MARK: - Body
 
+    /// Built from chunky, flat-shaded low-poly shapes in soft, muted colors.
     private func build() {
-        let white = Shapes.color(0.99, 0.98, 0.96)
-        let cream = Shapes.color(0.99, 0.88, 0.70)
-        let ginger = Shapes.color(0.90, 0.58, 0.30)
-        let shirt = Shapes.color(0.42, 0.58, 0.80)
-        let shirtLight = Shapes.color(0.60, 0.72, 0.88)
-        let overalls = Shapes.color(0.86, 0.55, 0.24)
-        let button = Shapes.color(0.40, 0.26, 0.14)
-        let green = Shapes.color(0.48, 0.64, 0.26)
-        let dark = Shapes.color(0.08, 0.07, 0.07)
-        let pink = Shapes.color(0.95, 0.62, 0.62)
-        let tabby = Textures.tabby
+        let white = Shapes.color(0.93, 0.91, 0.87)
+        let cream = Shapes.color(0.93, 0.86, 0.74)
+        let ginger = Shapes.color(0.78, 0.58, 0.42)
+        let shirt = Shapes.color(0.48, 0.56, 0.68)
+        let overalls = Shapes.color(0.72, 0.55, 0.38)
+        let green = Shapes.color(0.48, 0.56, 0.38)
+        let dark = Shapes.color(0.12, 0.10, 0.10)
+        let pink = Shapes.color(0.86, 0.62, 0.60)
 
         // Short legs in overall trousers, with white feet, hanging from hip pivots so they can swing.
         for (leg, x) in [(leftLeg, -Self.legX), (rightLeg, Self.legX)] {
             leg.position = SCNVector3(x, Self.hipHeight, 0)
-            leg.addChildNode(Shapes.capsule(radius: 0.058, height: 0.16, overalls, at: SCNVector3(0, -0.06, 0)))
-            leg.addChildNode(Shapes.sphere(radius: 0.06, white, at: SCNVector3(0, -0.13, 0.02), scale: SCNVector3(1, 0.6, 1.3)))
+            leg.addChildNode(Shapes.blob(radius: 0.06, overalls, rings: 3, sides: 6, at: SCNVector3(0, -0.06, 0),
+                                         scale: SCNVector3(1, 1.5, 1)))
+            leg.addChildNode(Shapes.blob(radius: 0.06, white, rings: 3, sides: 6, at: SCNVector3(0, -0.13, 0.02),
+                                         scale: SCNVector3(1, 0.6, 1.3)))
             node.addChildNode(leg)
         }
         node.addChildNode(body)
 
-        // Round tummy in a blue shirt, with the overalls over the bottom half.
-        body.addChildNode(Shapes.sphere(radius: 0.2, shirt, at: SCNVector3(0, 0.3, 0), scale: SCNVector3(1, 1.05, 0.9)))
-        body.addChildNode(Shapes.sphere(radius: 0.205, overalls, at: SCNVector3(0, 0.22, 0), scale: SCNVector3(1, 0.6, 0.92)))
-        // Bib, straps over the shoulders, and buttons.
+        // Round tummy in a blue shirt, with the overalls over the bottom half, a bib and straps.
+        body.addChildNode(Shapes.blob(radius: 0.2, shirt, sides: 8, at: SCNVector3(0, 0.3, 0), scale: SCNVector3(1, 1.05, 0.9)))
+        body.addChildNode(Shapes.blob(radius: 0.21, overalls, sides: 8, at: SCNVector3(0, 0.22, 0), scale: SCNVector3(1, 0.6, 0.92)))
         let bib = Shapes.box(0.17, 0.12, 0.02, overalls, at: SCNVector3(0, 0.25, 0.168))
         bib.eulerAngles.x = -0.25
         body.addChildNode(bib)
@@ -73,39 +72,34 @@ final class Cat {
                 strap.eulerAngles.x = -0.45 * side
                 body.addChildNode(strap)
             }
-            body.addChildNode(Shapes.sphere(radius: 0.016, button, at: SCNVector3(x, 0.355, 0.165)))
-        }
-        // Collar.
-        for x: CGFloat in [-1, 1] {
-            let collar = Shapes.pyramid(0.07, 0.06, 0.02, shirtLight, at: SCNVector3(x * 0.045, 0.5, 0.1))
-            collar.eulerAngles.x = .pi
-            collar.eulerAngles.z = x * 0.4
-            body.addChildNode(collar)
         }
 
-        // Arms: blue sleeves rolled up to a light cuff, then a white paw. The inner node swings.
+        // Stubby arms with white paws. The inner node swings.
         for (arm, x) in [(leftArm, -0.19), (rightArm, 0.19)] as [(SCNNode, CGFloat)] {
             let shoulder = SCNNode()
             shoulder.position = SCNVector3(x, 0.42, 0)
             shoulder.eulerAngles.z = x < 0 ? -0.35 : 0.35
-            arm.addChildNode(Shapes.capsule(radius: 0.048, height: 0.12, shirt, at: SCNVector3(0, -0.03, 0)))
-            arm.addChildNode(Shapes.sphere(radius: 0.05, shirtLight, at: SCNVector3(0, -0.08, 0), scale: SCNVector3(1, 0.45, 1)))
-            arm.addChildNode(Shapes.sphere(radius: 0.045, white, at: SCNVector3(0, -0.125, 0)))
+            arm.addChildNode(Shapes.blob(radius: 0.05, shirt, rings: 3, sides: 6, at: SCNVector3(0, -0.04, 0),
+                                         scale: SCNVector3(1, 1.5, 1)))
+            arm.addChildNode(Shapes.blob(radius: 0.045, white, rings: 3, sides: 5, at: SCNVector3(0, -0.115, 0)))
             shoulder.addChildNode(arm)
             body.addChildNode(shoulder)
         }
 
-        // Big round cream head: white muzzle, big green eyes, ginger stripes on the forehead.
+        // Big chunky head: white muzzle, simple eyes, ginger stripes on the forehead.
         head.position = SCNVector3(0, 0.62, 0)
-        head.addChildNode(Shapes.sphere(radius: 0.17, cream, at: SCNVector3(0, 0, 0), scale: SCNVector3(1.15, 0.95, 1)))
-        head.addChildNode(Shapes.sphere(radius: 0.075, white, at: SCNVector3(0, -0.05, 0.12), scale: SCNVector3(1.35, 0.8, 0.6)))
-        head.addChildNode(Shapes.sphere(radius: 0.016, pink, at: SCNVector3(0, -0.02, 0.165), scale: SCNVector3(1.2, 0.8, 0.7)))
+        head.addChildNode(Shapes.blob(radius: 0.17, cream, rings: 5, sides: 8, at: SCNVector3(0, 0, 0),
+                                      scale: SCNVector3(1.15, 0.95, 1)))
+        head.addChildNode(Shapes.blob(radius: 0.075, white, rings: 3, sides: 6, at: SCNVector3(0, -0.05, 0.12),
+                                      scale: SCNVector3(1.35, 0.8, 0.6)))
+        head.addChildNode(Shapes.blob(radius: 0.018, pink, rings: 2, sides: 4, at: SCNVector3(0, -0.02, 0.165)))
         for x: CGFloat in [-1, 1] {
             let eye = SCNNode()
             eye.position = SCNVector3(x * 0.068, 0.03, 0.142)
-            eye.addChildNode(Shapes.sphere(radius: 0.034, green, at: SCNVector3(0, 0, 0), scale: SCNVector3(1, 1.1, 0.5)))
-            eye.addChildNode(Shapes.sphere(radius: 0.02, dark, at: SCNVector3(0, 0, 0.012), scale: SCNVector3(1, 1.2, 0.5)))
-            eye.addChildNode(Shapes.sphere(radius: 0.009, .white, at: SCNVector3(-0.008, 0.012, 0.02)))
+            eye.addChildNode(Shapes.blob(radius: 0.034, green, rings: 3, sides: 6, at: SCNVector3(0, 0, 0),
+                                         scale: SCNVector3(1, 1.1, 0.5)))
+            eye.addChildNode(Shapes.blob(radius: 0.022, dark, rings: 2, sides: 4, at: SCNVector3(0, 0, 0.012),
+                                         scale: SCNVector3(1, 1.3, 0.5)))
             head.addChildNode(eye)
             eyes.append(eye)
 
@@ -115,13 +109,9 @@ final class Cat {
             innerEar.eulerAngles.z = -x * 0.3
             head.addChildNode(ear)
             head.addChildNode(innerEar)
-            // Ginger cheek stripes.
-            let cheek = Shapes.box(0.05, 0.014, 0.01, ginger, at: SCNVector3(x * 0.17, -0.01, 0.07))
-            cheek.eulerAngles.y = x * 0.9
-            head.addChildNode(cheek)
         }
-        for x: CGFloat in [-0.04, 0, 0.04] {
-            let stripe = Shapes.box(0.02, 0.06, 0.01, ginger, at: SCNVector3(x, 0.075, 0.128))
+        for x: CGFloat in [-0.045, 0, 0.045] {
+            let stripe = Shapes.box(0.022, 0.06, 0.01, ginger, at: SCNVector3(x, 0.075, 0.128))
             stripe.eulerAngles.x = -0.6
             head.addChildNode(stripe)
         }
@@ -132,7 +122,8 @@ final class Cat {
         tailMount.position = SCNVector3(0, 0.2, -0.17)
         tailMount.eulerAngles.x = -0.9
         let tail = SCNNode()
-        tail.addChildNode(Shapes.capsule(radius: 0.038, height: 0.3, .white, texture: tabby, at: SCNVector3(0, 0.13, 0)))
+        tail.addChildNode(Shapes.blob(radius: 0.04, .white, texture: Textures.tabby, rings: 4, sides: 6,
+                                      at: SCNVector3(0, 0.13, 0), scale: SCNVector3(1, 4, 1)))
         tailMount.addChildNode(tail)
         body.addChildNode(tailMount)
         let swish = SCNAction.rotateBy(x: 0, y: 0, z: 0.3, duration: 2.2)

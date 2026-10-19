@@ -48,12 +48,12 @@ enum Landmarks {
         return windmill
     }
 
-    private static let stone = SIMD3<Float>(0.62, 0.58, 0.52)
-    private static let plaster = SIMD3<Float>(0.84, 0.74, 0.62)
-    private static let roofTiles = Shapes.color(0.62, 0.40, 0.28)
-    private static let oldWood = Shapes.color(0.38, 0.26, 0.18)
+    private static let stone = SIMD3<Float>(0.58, 0.56, 0.52)
+    private static let plaster = SIMD3<Float>(0.78, 0.72, 0.64)
+    private static let roofTiles = Shapes.color(0.52, 0.40, 0.33)
+    private static let oldWood = Shapes.color(0.36, 0.28, 0.22)
     private static let shadow = Shapes.color(0.10, 0.08, 0.07)
-    private static let burlap = Shapes.color(0.86, 0.78, 0.62)
+    private static let burlap = Shapes.color(0.80, 0.74, 0.62)
 
     private static let towerHeight: Float = 1.05
     private static let sides = 10

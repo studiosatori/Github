@@ -19,11 +19,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         islandScene = IslandScene(growthSeconds: GrowthStore.load())
 
-        islandView = IslandView(frame: NSRect(x: 0, y: 0, width: 420, height: 420))
+        islandView = IslandView(frame: NSRect(x: 0, y: 0, width: 504, height: 420))
         islandView.scene = islandScene.scene
         islandView.backgroundColor = .clear
         islandView.layer?.isOpaque = false
-        islandView.antialiasingMode = .multisampling4X
+        // Chunky, sharp pixels: low-resolution render scaled up, no smoothing.
+        islandView.antialiasingMode = .none
+        islandView.technique = PixelTechnique.make(device: islandView.device)
         islandView.preferredFramesPerSecond = 30
         islandView.menu = makeMenu()
 
@@ -36,7 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         window = IslandWindow(size: islandView.frame.size)
         window.contentView = islandView
-        window.setFrameAutosaveName("FloatingIslandWindow")
+        window.setFrameAutosaveName("FloatingIslandWideWindow")
         window.orderFrontRegardless()
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)

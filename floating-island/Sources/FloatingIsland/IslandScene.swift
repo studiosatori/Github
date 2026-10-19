@@ -28,8 +28,8 @@ final class IslandScene {
         camera.fieldOfView = 35
         let cameraNode = SCNNode()
         cameraNode.camera = camera
-        cameraNode.position = SCNVector3(0, 2.3, 6.8)
-        cameraNode.look(at: SCNVector3(0, -0.45, 0))
+        cameraNode.position = SCNVector3(0, 2.66, 6.77)
+        cameraNode.look(at: SCNVector3(0, -0.07, 0))
         scene.rootNode.addChildNode(cameraNode)
 
         let ambient = SCNLight()
@@ -44,7 +44,7 @@ final class IslandScene {
         let sun = SCNLight()
         sun.type = .directional
         sun.intensity = 650
-        sun.color = NSColor(srgbRed: 1, green: 0.95, blue: 0.85, alpha: 1)
+        sun.color = NSColor(srgbRed: 1, green: 0.97, blue: 0.92, alpha: 1)
         let sunNode = SCNNode()
         sunNode.light = sun
         sunNode.eulerAngles = SCNVector3(-0.9, 0.5, 0)

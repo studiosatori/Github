@@ -7,15 +7,15 @@ enum IslandBuilder {
     /// Grass grows out to here; leaves near the rim spill a little over the edge.
     static let grassRadius: Float = radius * 0.8
     /// Squashes the island into a slight oval.
-    static let stretch = SIMD3<Float>(1.15, 1, 0.9)
+    static let stretch = SIMD3<Float>(1.35, 1, 0.9)
 
-    static let dirtColor = NSColor(srgbRed: 0.40, green: 0.30, blue: 0.22, alpha: 1)
-    static let meadowColor = NSColor(srgbRed: 0.28, green: 0.42, blue: 0.17, alpha: 1)
+    static let dirtColor = NSColor(srgbRed: 0.36, green: 0.30, blue: 0.25, alpha: 1)
+    static let meadowColor = NSColor(srgbRed: 0.30, green: 0.36, blue: 0.22, alpha: 1)
     /// Leaf colors, dark at the base and light at the tip (sRGB).
     static let leafPalettes: [(base: SIMD3<Float>, tip: SIMD3<Float>)] = [
-        (SIMD3(0.16, 0.30, 0.10), SIMD3(0.45, 0.66, 0.24)),
-        (SIMD3(0.18, 0.34, 0.11), SIMD3(0.55, 0.72, 0.28)),
-        (SIMD3(0.14, 0.27, 0.10), SIMD3(0.38, 0.58, 0.22)),
+        (SIMD3(0.20, 0.27, 0.16), SIMD3(0.48, 0.56, 0.34)),
+        (SIMD3(0.22, 0.30, 0.17), SIMD3(0.55, 0.62, 0.38)),
+        (SIMD3(0.18, 0.25, 0.15), SIMD3(0.42, 0.50, 0.30)),
     ]
 
     struct Island {
@@ -115,14 +115,14 @@ enum IslandBuilder {
             }
         }
         // Warm, earthy browns, darker toward the bottom.
-        band(edge, rim, r: 0.33, g: 0.24, b: 0.18)
-        band(rim, rock1, r: 0.38, g: 0.28, b: 0.22)
-        band(rock1, rock2, r: 0.40, g: 0.30, b: 0.25)
-        band(rock2, rock3, r: 0.35, g: 0.26, b: 0.23)
-        band(rock3, rock4, r: 0.30, g: 0.23, b: 0.21)
+        band(edge, rim, r: 0.32, g: 0.27, b: 0.23)
+        band(rim, rock1, r: 0.36, g: 0.31, b: 0.27)
+        band(rock1, rock2, r: 0.38, g: 0.33, b: 0.29)
+        band(rock2, rock3, r: 0.33, g: 0.29, b: 0.26)
+        band(rock3, rock4, r: 0.29, g: 0.26, b: 0.24)
         for i in 0..<sides {
             body.addSideTriangle(rock4[i], rock4[(i + 1) % sides], tip,
-                                 color: vertexColor(0.26, 0.20, 0.19, shade: rng.float(0.9...1.05)))
+                                 color: vertexColor(0.25, 0.22, 0.21, shade: rng.float(0.9...1.05)))
         }
 
         let topMaterial = flatMaterial(dirtColor, texture: Textures.soil)
@@ -171,15 +171,15 @@ enum IslandBuilder {
     /// A thin stem with a five-petal yellow flower on top, facing up.
     private static func addFlower(to mesh: inout LowPolyMesh, height: Float, rng: inout SeededRandom) {
         let up = SIMD3<Float>(0, 1, 0)
-        let stem = vertexColor(SIMD3(0.24, 0.42, 0.16))
+        let stem = vertexColor(SIMD3(0.28, 0.36, 0.22))
         let top = SIMD3<Float>(rng.float(-0.02...0.02), height, rng.float(-0.02...0.02))
         let w = SIMD3<Float>(0.004, 0, 0)
         mesh.addTriangle(-w, w, top, normal: up, colors: (stem, stem, stem))
         mesh.addTriangle(SIMD3(0, 0, -0.004), SIMD3(0, 0, 0.004), top, normal: up, colors: (stem, stem, stem))
 
-        let petal = vertexColor(SIMD3(0.98, 0.80, 0.22))
-        let petalTip = vertexColor(SIMD3(1.0, 0.88, 0.40))
-        let heart = vertexColor(SIMD3(0.62, 0.36, 0.12))
+        let petal = vertexColor(SIMD3(0.86, 0.74, 0.36))
+        let petalTip = vertexColor(SIMD3(0.92, 0.82, 0.50))
+        let heart = vertexColor(SIMD3(0.48, 0.34, 0.18))
         let turn = rng.float(0...(2 * Float.pi))
         for k in 0..<5 {
             let a = turn + Float(k) * 2 * Float.pi / 5

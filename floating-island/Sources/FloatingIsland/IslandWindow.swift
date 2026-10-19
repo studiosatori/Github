@@ -29,7 +29,7 @@ final class IslandView: SCNView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 
-/// Round button in the top-right corner. Drag it to resize the island; the window stays square.
+/// Round button in the top-right corner. Drag it to resize the island; the window keeps its shape.
 final class ResizeHandle: NSView {
     static let diameter: CGFloat = 26
     static let sizeRange: ClosedRange<CGFloat> = 200...1000
@@ -74,8 +74,9 @@ final class ResizeHandle: NSView {
         // Up-right grows, down-left shrinks. The bottom-left corner stays put.
         let mouse = NSEvent.mouseLocation
         let delta = ((mouse.x - startMouse.x) + (mouse.y - startMouse.y)) / 2
-        let side = min(Self.sizeRange.upperBound, max(Self.sizeRange.lowerBound, startFrame.width + delta))
-        window.setFrame(NSRect(origin: startFrame.origin, size: NSSize(width: side, height: side)), display: true)
+        let height = min(Self.sizeRange.upperBound, max(Self.sizeRange.lowerBound, startFrame.height + delta))
+        let width = height * startFrame.width / startFrame.height
+        window.setFrame(NSRect(origin: startFrame.origin, size: NSSize(width: width, height: height)), display: true)
     }
 
     override func mouseUp(with event: NSEvent) {

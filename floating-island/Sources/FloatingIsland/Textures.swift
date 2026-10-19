@@ -2,7 +2,7 @@ import CoreGraphics
 import Foundation
 import simd
 
-/// Tiny 32×32 procedural textures. Shown with nearest-neighbor filtering for a soft lo-fi look.
+/// Tiny 32×32 procedural textures, shown with nearest-neighbor filtering.
 /// They're grayscale and get tinted by vertex colors or the material color.
 enum Textures {
     private static let size = 32
@@ -21,8 +21,8 @@ enum Textures {
     /// In color, unlike the others; use it with a white material.
     static let tabby: CGImage = {
         var rng = SeededRandom(seed: 15)
-        let cream = SIMD3<Float>(0.99, 0.90, 0.74)
-        let orange = SIMD3<Float>(0.90, 0.58, 0.30)
+        let cream = SIMD3<Float>(0.93, 0.86, 0.74)
+        let orange = SIMD3<Float>(0.78, 0.58, 0.42)
         let wave = (0..<size).map { x in Int((sin(Float(x) / Float(size) * 4 * Float.pi) * 1.5).rounded()) + 2 }
         let pixels = (0..<size * size).map { i -> SIMD3<Float> in
             let x = i % size, y = i / size
@@ -47,8 +47,8 @@ enum Textures {
     /// Orange sail canvas on a dark wooden lattice, with a few worn, darker patches. In color.
     static let lattice: CGImage = {
         var rng = SeededRandom(seed: 17)
-        let canvas = SIMD3<Float>(0.80, 0.48, 0.26)
-        let wood = SIMD3<Float>(0.36, 0.22, 0.14)
+        let canvas = SIMD3<Float>(0.70, 0.52, 0.38)
+        let wood = SIMD3<Float>(0.34, 0.26, 0.20)
         let wear = (0..<16).map { _ in rng.float(0...1) < 0.25 ? rng.float(0.7...0.85) : 1 }
         let pixels = (0..<size * size).map { i -> SIMD3<Float> in
             let x = i % size, y = i / size
