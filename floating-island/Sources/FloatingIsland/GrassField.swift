@@ -49,9 +49,8 @@ final class GrassField {
         let r = IslandBuilder.grassRadius * rng.float(0...1).squareRoot()
         let angle = rng.float(0...(2 * Float.pi))
         let node = SCNNode(geometry: geometries[Int(rng.next() % UInt64(geometries.count))])
-        node.position = SCNVector3(CGFloat(cos(angle) * r),
-                                   CGFloat(IslandBuilder.surfaceHeight(atRadius: r) - 0.03),
-                                   CGFloat(sin(angle) * r))
+        node.position = scnVector(SIMD3(cos(angle) * r, IslandBuilder.surfaceHeight(atRadius: r) - 0.03,
+                                        sin(angle) * r) * IslandBuilder.stretch)
         node.eulerAngles.y = CGFloat(rng.float(0...(2 * Float.pi)))
         parent.addChildNode(node)
         tufts.append((node, Double(index) * Self.sproutInterval, rng.float(0.75...1.2)))

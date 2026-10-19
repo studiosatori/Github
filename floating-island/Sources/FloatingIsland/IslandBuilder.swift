@@ -5,14 +5,16 @@ import SceneKit
 enum IslandBuilder {
     static let radius: Float = 1.6
     /// Grass stays inside this radius so tufts never hang over the edge.
-    static let grassRadius: Float = radius * 0.76
+    static let grassRadius: Float = radius * 0.68
+    /// Squashes the island into a slight oval.
+    static let stretch = SIMD3<Float>(1.15, 1, 0.9)
 
-    static let dirtColor = NSColor(srgbRed: 0.56, green: 0.42, blue: 0.29, alpha: 1)
-    static let meadowColor = NSColor(srgbRed: 0.45, green: 0.70, blue: 0.32, alpha: 1)
+    static let dirtColor = NSColor(srgbRed: 0.48, green: 0.42, blue: 0.46, alpha: 1)
+    static let meadowColor = NSColor(srgbRed: 0.40, green: 0.68, blue: 0.56, alpha: 1)
     static let grassColors = [
-        NSColor(srgbRed: 0.36, green: 0.64, blue: 0.26, alpha: 1),
-        NSColor(srgbRed: 0.46, green: 0.74, blue: 0.30, alpha: 1),
-        NSColor(srgbRed: 0.30, green: 0.56, blue: 0.24, alpha: 1),
+        NSColor(srgbRed: 0.33, green: 0.62, blue: 0.52, alpha: 1),
+        NSColor(srgbRed: 0.42, green: 0.72, blue: 0.58, alpha: 1),
+        NSColor(srgbRed: 0.28, green: 0.54, blue: 0.48, alpha: 1),
     ]
 
     struct Island {
@@ -36,28 +38,33 @@ enum IslandBuilder {
 
     static func makeIsland(seed: UInt64) -> Island {
         var rng = SeededRandom(seed: seed)
-        let sides = 9
-        let angles = (0..<sides).map { Float($0) / Float(sides) * 2 * Float.pi + rng.float(-0.15...0.15) }
+        let sides = 12
+        let angles = (0..<sides).map { Float($0) / Float(sides) * 2 * Float.pi + rng.float(-0.1...0.1) }
+        // The rock drifts to one side as it goes down, so it isn't a neat cone.
+        let leanAngle = rng.float(0...(2 * Float.pi))
+        let leanDirection = SIMD3<Float>(cos(leanAngle), 0, sin(leanAngle))
 
         // Every ring shares the base angles. A ring twisted slightly ahead of the one
         // above it keeps the strips between them from folding over.
-        func ring(radius scale: ClosedRange<Float>, twist: Float,
-                  height: (Float) -> Float, jitterY: Float) -> [SIMD3<Float>] {
+        func ring(radius scale: ClosedRange<Float>, twist: Float, height: (Float) -> Float,
+                  jitterY: Float, lean: Float = 0) -> [SIMD3<Float>] {
             angles.map { angle in
                 let r = IslandBuilder.radius * rng.float(scale)
                 let y = height(r) + rng.float(-jitterY...jitterY)
-                return SIMD3(cos(angle + twist) * r, y, sin(angle + twist) * r)
+                return SIMD3(cos(angle + twist) * r, y, sin(angle + twist) * r) * IslandBuilder.stretch
+                    + leanDirection * lean
             }
         }
 
         let dome: (Float) -> Float = { IslandBuilder.surfaceHeight(atRadius: $0) }
-        let edge = ring(radius: 0.94...1.04, twist: 0, height: dome, jitterY: 0.03)
-        let inner = ring(radius: 0.45...0.55, twist: 0.35, height: dome, jitterY: 0.03)
-        let rim = edge.map { p in SIMD3(p.x * 0.96, p.y - 0.26 + rng.float(-0.04...0.04), p.z * 0.96) }
-        let rock1 = ring(radius: 0.74...0.86, twist: 0.2, height: { _ in -0.75 }, jitterY: 0.1)
-        let rock2 = ring(radius: 0.44...0.56, twist: 0.45, height: { _ in -1.45 }, jitterY: 0.12)
-        let rock3 = ring(radius: 0.16...0.24, twist: 0.7, height: { _ in -2.05 }, jitterY: 0.1)
-        let tip = SIMD3<Float>(rng.float(-0.1...0.1), -2.65, rng.float(-0.1...0.1))
+        let edge = ring(radius: 0.88...1.06, twist: 0, height: dome, jitterY: 0.04)
+        let inner = ring(radius: 0.42...0.58, twist: 0.26, height: dome, jitterY: 0.03)
+        let rim = edge.map { p in SIMD3(p.x * 0.95, p.y - rng.float(0.2...0.34), p.z * 0.95) }
+        let rock1 = ring(radius: 0.70...0.92, twist: 0.1, height: { _ in -0.6 }, jitterY: 0.15, lean: 0.08)
+        let rock2 = ring(radius: 0.48...0.78, twist: 0.2, height: { _ in -1.15 }, jitterY: 0.18, lean: 0.2)
+        let rock3 = ring(radius: 0.32...0.56, twist: 0.3, height: { _ in -1.7 }, jitterY: 0.15, lean: 0.32)
+        let rock4 = ring(radius: 0.12...0.28, twist: 0.4, height: { _ in -2.2 }, jitterY: 0.12, lean: 0.42)
+        let tip = leanDirection * 0.5 + SIMD3<Float>(rng.float(-0.08...0.08), -2.75, rng.float(-0.08...0.08))
         let center = SIMD3<Float>(0, dome(0) + 0.02, 0)
 
         // Top: grayscale per-face shades, colored by the shared top material.
@@ -76,17 +83,18 @@ enum IslandBuilder {
         func band(_ upper: [SIMD3<Float>], _ lower: [SIMD3<Float>], r: Float, g: Float, b: Float) {
             for i in 0..<sides {
                 let j = (i + 1) % sides
-                body.addSideTriangle(upper[i], lower[i], upper[j], color: vertexColor(r, g, b, shade: rng.float(0.85...1.05)))
-                body.addSideTriangle(lower[i], lower[j], upper[j], color: vertexColor(r, g, b, shade: rng.float(0.85...1.05)))
+                body.addSideTriangle(upper[i], lower[i], upper[j], color: vertexColor(r, g, b, shade: rng.float(0.8...1.06)))
+                body.addSideTriangle(lower[i], lower[j], upper[j], color: vertexColor(r, g, b, shade: rng.float(0.8...1.06)))
             }
         }
-        band(edge, rim, r: 0.50, g: 0.35, b: 0.23)
-        band(rim, rock1, r: 0.47, g: 0.40, b: 0.35)
-        band(rock1, rock2, r: 0.50, g: 0.47, b: 0.45)
-        band(rock2, rock3, r: 0.43, g: 0.40, b: 0.39)
+        band(edge, rim, r: 0.44, g: 0.38, b: 0.43)
+        band(rim, rock1, r: 0.44, g: 0.44, b: 0.52)
+        band(rock1, rock2, r: 0.46, g: 0.50, b: 0.60)
+        band(rock2, rock3, r: 0.40, g: 0.44, b: 0.55)
+        band(rock3, rock4, r: 0.36, g: 0.39, b: 0.50)
         for i in 0..<sides {
-            body.addSideTriangle(rock3[i], rock3[(i + 1) % sides], tip,
-                                 color: vertexColor(0.36, 0.34, 0.33, shade: rng.float(0.85...1.05)))
+            body.addSideTriangle(rock4[i], rock4[(i + 1) % sides], tip,
+                                 color: vertexColor(0.32, 0.35, 0.46, shade: rng.float(0.8...1.05)))
         }
 
         let topMaterial = flatMaterial(dirtColor)

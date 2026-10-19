@@ -10,6 +10,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var islandScene: IslandScene!
     private var window: IslandWindow!
     private var islandView: IslandView!
+    private var resizeHandle: ResizeHandle!
+    private var handleShown = false
     private var statusItem: NSStatusItem!
     private var lastTick = Date()
     private var secondsSinceSave: Double = 0
@@ -24,6 +26,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         islandView.antialiasingMode = .multisampling4X
         islandView.preferredFramesPerSecond = 30
         islandView.menu = makeMenu()
+
+        let inset = ResizeHandle.diameter + 8
+        resizeHandle = ResizeHandle(frame: NSRect(x: islandView.bounds.maxX - inset, y: islandView.bounds.maxY - inset,
+                                                  width: ResizeHandle.diameter, height: ResizeHandle.diameter))
+        resizeHandle.autoresizingMask = [.minXMargin, .minYMargin]
+        resizeHandle.alphaValue = 0
+        islandView.addSubview(resizeHandle)
 
         window = IslandWindow(size: islandView.frame.size)
         window.contentView = islandView
@@ -62,15 +71,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     /// Clicks on empty, transparent parts of the window fall through to whatever is behind it.
+    /// Also shows the resize handle while the mouse is over the window.
     @objc private func updateClickThrough() {
+        guard !resizeHandle.isResizing else { return }
         let mouse = NSEvent.mouseLocation
-        var overIsland = false
-        if window.frame.contains(mouse) {
-            let point = islandView.convert(window.convertPoint(fromScreen: mouse), from: nil)
-            overIsland = !islandView.hitTest(point, options: [.searchMode: SCNHitTestSearchMode.any.rawValue]).isEmpty
+        let overWindow = window.frame.contains(mouse)
+        var interactive = false
+        if overWindow {
+            let windowPoint = window.convertPoint(fromScreen: mouse)
+            if resizeHandle.bounds.contains(resizeHandle.convert(windowPoint, from: nil)) {
+                interactive = true
+            } else {
+                let point = islandView.convert(windowPoint, from: nil)
+                interactive = !islandView.hitTest(point, options: [.searchMode: SCNHitTestSearchMode.any.rawValue]).isEmpty
+            }
         }
-        if window.ignoresMouseEvents == overIsland {
-            window.ignoresMouseEvents = !overIsland
+        if window.ignoresMouseEvents == interactive {
+            window.ignoresMouseEvents = !interactive
+        }
+        if handleShown != overWindow {
+            handleShown = overWindow
+            resizeHandle.animator().alphaValue = overWindow ? 1 : 0
         }
     }
 

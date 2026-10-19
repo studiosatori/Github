@@ -1,7 +1,7 @@
 import AppKit
 import SceneKit
 
-/// The island plus camera, lights, and its idle bob and spin.
+/// The island plus camera, lights, and its gentle idle bob.
 final class IslandScene {
     static let seed: UInt64 = 2026
 
@@ -23,13 +23,14 @@ final class IslandScene {
         camera.fieldOfView = 35
         let cameraNode = SCNNode()
         cameraNode.camera = camera
-        cameraNode.position = SCNVector3(0, 2.4, 6.2)
-        cameraNode.look(at: SCNVector3(0, -0.5, 0))
+        cameraNode.position = SCNVector3(0, 2.6, 7.0)
+        cameraNode.look(at: SCNVector3(0, -0.55, 0))
         scene.rootNode.addChildNode(cameraNode)
 
         let ambient = SCNLight()
         ambient.type = .ambient
         ambient.intensity = 450
+        ambient.color = NSColor(srgbRed: 0.80, green: 0.86, blue: 1, alpha: 1)
         let ambientNode = SCNNode()
         ambientNode.light = ambient
         scene.rootNode.addChildNode(ambientNode)
@@ -37,7 +38,7 @@ final class IslandScene {
         let sun = SCNLight()
         sun.type = .directional
         sun.intensity = 850
-        sun.color = NSColor(srgbRed: 1, green: 0.96, blue: 0.88, alpha: 1)
+        sun.color = NSColor(srgbRed: 0.94, green: 0.96, blue: 1, alpha: 1)
         let sunNode = SCNNode()
         sunNode.light = sun
         sunNode.eulerAngles = SCNVector3(-0.9, 0.5, 0)
@@ -48,7 +49,6 @@ final class IslandScene {
         rise.timingMode = .easeInEaseOut
         fall.timingMode = .easeInEaseOut
         root.runAction(.repeatForever(.sequence([rise, fall])))
-        island.node.runAction(.repeatForever(.rotateBy(x: 0, y: 2 * .pi, z: 0, duration: 90)))
 
         refreshTopColor()
     }

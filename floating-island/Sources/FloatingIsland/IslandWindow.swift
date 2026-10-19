@@ -28,3 +28,57 @@ final class IslandView: SCNView {
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
+
+/// Round button in the top-right corner. Drag it to resize the island; the window stays square.
+final class ResizeHandle: NSView {
+    static let diameter: CGFloat = 26
+    static let sizeRange: ClosedRange<CGFloat> = 200...1000
+
+    private(set) var isResizing = false
+    private var startMouse = NSPoint.zero
+    private var startFrame = NSRect.zero
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        toolTip = "Drag to resize"
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let circle = NSBezierPath(ovalIn: bounds.insetBy(dx: 1, dy: 1))
+        NSColor(white: 1, alpha: 0.85).setFill()
+        circle.fill()
+        NSColor(white: 0, alpha: 0.15).setStroke()
+        circle.stroke()
+
+        guard let symbol = NSImage(systemSymbolName: "arrow.up.left.and.arrow.down.right",
+                                   accessibilityDescription: "Resize")?
+            .withSymbolConfiguration(.init(pointSize: 11, weight: .semibold)) else { return }
+        let size = symbol.size
+        symbol.draw(in: NSRect(x: bounds.midX - size.width / 2, y: bounds.midY - size.height / 2,
+                               width: size.width, height: size.height),
+                    from: .zero, operation: .sourceOver, fraction: 0.6)
+    }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        isResizing = true
+        startMouse = NSEvent.mouseLocation
+        startFrame = window?.frame ?? .zero
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let window else { return }
+        // Up-right grows, down-left shrinks. The bottom-left corner stays put.
+        let mouse = NSEvent.mouseLocation
+        let delta = ((mouse.x - startMouse.x) + (mouse.y - startMouse.y)) / 2
+        let side = min(Self.sizeRange.upperBound, max(Self.sizeRange.lowerBound, startFrame.width + delta))
+        window.setFrame(NSRect(origin: startFrame.origin, size: NSSize(width: side, height: side)), display: true)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        isResizing = false
+    }
+}

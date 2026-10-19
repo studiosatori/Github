@@ -1,12 +1,12 @@
 # Floating Island
 
-A cozy idle game: a small low-poly island floats on your macOS desktop, and grass slowly grows on top of it.
+A cozy idle game: a small, blue-tinted, low-poly island of uneven rock floats on your macOS desktop, and grass slowly grows on top of it.
 
 - Frameless, transparent window: only the island shows, floating over your other apps and on every Space.
-- The island bobs gently and turns slowly.
+- The island bobs gently in place.
 - A new grass tuft sprouts every 6 seconds and grows in over 30 seconds. The ground turns from dirt to meadow as the grass spreads (220 tufts, about 22 minutes to fill).
 - Progress is saved. Grass keeps growing while the app is closed (up to 8 hours).
-- Drag the island to move it. Clicks on the transparent area pass through to the apps behind.
+- Drag the island to move it. Hover over the window and drag the round button in the top-right corner to resize it. Clicks on the transparent area pass through to the apps behind.
 - Use the 🏝 menu bar icon or right-click the island to see grass progress, toggle Keep on Top, reset, or quit.
 
 ## Run
@@ -24,10 +24,10 @@ You can also open `Package.swift` in Xcode and press Run.
 
 | File | What it does |
 |---|---|
-| `IslandWindow.swift` | Transparent floating window, and a view you drag to move it |
+| `IslandWindow.swift` | Transparent floating window, drag-to-move, and the resize button |
 | `IslandBuilder.swift` | Procedural low-poly island and grass tuft shapes |
 | `GrassField.swift` | The idle growth mechanic |
-| `IslandScene.swift` | Camera, lights, bob and spin |
+| `IslandScene.swift` | Camera, lights and the bob |
 | `AppDelegate.swift` | Game loop, click-through, menus, save/load |
 
 Tuning knobs: `GrassField.sproutInterval`, `growDuration`, `maxTufts`, and `IslandScene.seed` (changes the island's shape).
